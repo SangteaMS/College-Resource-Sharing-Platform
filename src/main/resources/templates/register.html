@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Create account | College Hub</title><link rel="stylesheet" th:href="@{/css/styles.css}"></head>
+<body><header th:replace="~{fragments/layout :: siteHeader}"></header><main class="auth-page"><p class="eyebrow">JOIN THE STUDY SHELF</p><h1 class="page-title">Create your account<span>.</span></h1><p class="page-intro">Choose your programme and current semester so browsing can start with resources relevant to you. You can still view other courses.</p>
+    <form class="form-card" th:action="@{/register}" th:object="${registrationForm}" method="post">
+        <div class="notice notice-error" th:if="${#fields.hasGlobalErrors()}"><p th:each="error : ${#fields.globalErrors()}" th:text="${error}">Please check your details.</p></div>
+        <label>Full name<input type="text" th:field="*{fullName}" autocomplete="name" maxlength="120" required><span class="field-error" th:errors="*{fullName}"></span></label>
+        <label>Email address<input type="email" th:field="*{email}" autocomplete="email" maxlength="190" required><span class="field-error" th:errors="*{email}"></span></label>
+        <label>Password <small>At least 8 characters</small><input type="password" th:field="*{password}" autocomplete="new-password" minlength="8" maxlength="72" required><span class="field-error" th:errors="*{password}"></span></label>
+        <div class="form-row"><label>Preferred programme<select th:field="*{programmeId}" id="registration-programme"><option value="">Choose programme</option><option th:each="option : ${programmes}" th:value="${option.id}" th:text="${option.name}"></option></select><span class="field-error" th:errors="*{programmeId}"></span></label>
+            <label>Current semester<select th:field="*{semesterId}" id="registration-semester" data-semesters="true"><option value="">Choose semester</option><option th:each="option : ${semesters}" th:value="${option.id}" th:text="${option.label}"></option></select><span class="field-error" th:errors="*{semesterId}"></span></label></div>
+        <button class="button" type="submit">Create student account</button>
+        <p class="form-help">Already registered? <a th:href="@{/login}">Sign in</a></p>
+    </form>
+</main><footer th:replace="~{fragments/layout :: siteFooter}"></footer></body>
+</html>

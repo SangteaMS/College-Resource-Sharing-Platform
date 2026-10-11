@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="${editing ? 'Edit upload | CollegeHub' : 'Upload resource | CollegeHub'}">Upload resource | CollegeHub</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+<body th:attr="data-signed-in=${currentUser != null}">
+<header th:replace="~{fragments/layout :: siteHeader}"></header>
+<main class="upload-page">
+    <a class="back-link" th:href="${editing ? '/my-uploads' : '/resources'}">← Cancel and go back</a>
+    <p class="eyebrow">CONTRIBUTE TO COLLEGEHUB</p>
+    <h1 class="page-title" th:text="${editing ? 'Edit your resource.' : 'Upload a resource.'}">Upload a resource.</h1>
+    <p class="page-intro">Your resource will appear after approval. Only approved materials are visible to other students.</p>
+    <div class="notice notice-error" th:if="${tooLarge}" role="alert">The selected file exceeds the <span th:text="${maxUploadSize / 1048576}">20</span> MB upload limit. Your other text fields may not have reached the server; check them and choose the file again.</div>
+    <div class="notice notice-error" th:if="${fileNeedsReselect}" role="alert">There was a form error. Browsers cannot restore a selected file after an error, so choose the file again before resubmitting.</div>
+
+    <form class="form-card upload-form" th:action="${editing ? '/my-uploads/' + resourceId + '/edit' : '/uploads/new'}" th:object="${uploadForm}" method="post" enctype="multipart/form-data" id="resource-upload-form" data-upload-form>
+        <div class="notice notice-error form-errors" th:if="${#fields.hasGlobalErrors()}" role="alert" aria-live="polite"><p th:each="error : ${#fields.globalErrors()}" th:text="${error}">Please check the form.</p></div>
+
+        <fieldset class="form-section"><legend>Resource information</legend>
+            <label for="resource-title">Resource title</label>
+            <input id="resource-title" type="text" th:field="*{title}" maxlength="180" required aria-describedby="title-error">
+            <span class="field-error" id="title-error" th:errors="*{title}" role="alert"></span>
+            <label for="resource-description">Short description <span class="label-hint">Optional, up to 500 characters</span></label>
+            <textarea id="resource-description" th:field="*{description}" rows="4" maxlength="500"></textarea>
+            <span class="field-error" th:errors="*{description}" role="alert"></span>
+        </fieldset>
+
+        <fieldset class="form-section"><legend>Course and subject</legend>
+            <label for="upload-programme">Select course</label>
+            <select th:field="*{programmeId}" id="upload-programme" data-semester-target="upload-semester" data-subject-target="upload-subject" required><option value="">Choose a course</option><option th:each="option : ${programmes}" th:value="${option.id}" th:text="${option.name}"></option></select>
+            <span class="field-error" th:errors="*{programmeId}" role="alert"></span>
+            <div class="form-row">
+                <div><label for="upload-semester">Semester</label><select th:field="*{semesterId}" id="upload-semester" data-selected="" data-semesters="true" data-subject-target="upload-subject" required><option value="">Choose a semester</option><option th:each="option : ${semesters}" th:value="${option.id}" th:text="${option.label}"></option></select><span class="field-error" th:errors="*{semesterId}" role="alert"></span></div>
+                <div><label for="upload-subject">Subject</label><select th:field="*{subjectId}" id="upload-subject" data-selected="" data-subjects="true" required><option value="">Choose a subject</option><option th:each="option : ${subjects}" th:value="${option.id}" th:text="${option.name + ' (' + option.code + ')'}"></option></select><span class="field-error" th:errors="*{subjectId}" role="alert"></span></div>
+            </div>
+            <label for="resource-type">Resource type</label>
+            <select th:field="*{resourceType}" id="resource-type" required><option value="">Choose a type</option><option th:each="option : ${resourceTypes}" th:value="${option}" th:text="${option.label}"></option></select>
+            <span class="field-error" th:errors="*{resourceType}" role="alert"></span>
+        </fieldset>
+
+        <fieldset class="form-section exam-fields" id="exam-fields"><legend>Question paper details</legend>
+            <p class="form-help">These fields are only needed for a previous question paper.</p>
+            <div class="form-row">
+                <div><label for="exam-year">Exam year</label><input type="number" th:field="*{examYear}" min="1900" max="2200" id="exam-year"><span class="field-error" th:errors="*{examYear}" role="alert"></span></div>
+                <div><label for="exam-type">Exam type</label><select th:field="*{examType}" id="exam-type"><option value="">Choose an exam type</option><option th:each="option : ${examTypes}" th:value="${option}" th:text="${option.label}"></option></select><span class="field-error" th:errors="*{examType}" role="alert"></span></div>
+            </div>
+            <label id="exam-session-label" for="exam-session">Optional exam session or description for Other</label>
+            <input type="text" th:field="*{examSession}" id="exam-session" maxlength="100" placeholder="For example: April session">
+            <span class="field-error" th:errors="*{examSession}" role="alert"></span>
+        </fieldset>
+
+        <fieldset class="form-section file-drop" id="file-drop" th:attr="data-max-bytes=${maxUploadSize}"><legend>File attachment</legend>
+            <p class="form-help" th:if="${editing}" th:text="${'Current file: ' + existingFilename + '. Choose a different file only to replace it.'}">Current file</p>
+            <p class="form-help" th:unless="${editing}">Drop a file here or use the file picker.</p>
+            <label class="file-picker-label" for="resource-file">Choose a file</label>
+            <input type="file" name="file" id="resource-file" accept=".pdf,.pptx,.docx,.jpg,.jpeg,.png" th:required="${!editing}" aria-describedby="accepted-formats file-selection file-error">
+            <p class="file-help" id="accepted-formats">Accepted formats: PDF, PPTX, DOCX, JPG, PNG · Maximum <span th:text="${maxUploadSize / 1048576}">20</span> MB.</p>
+            <p class="file-selection" id="file-selection" aria-live="polite">No new file selected.</p>
+            <span class="field-error" id="file-error" th:errors="*{file}" role="alert"></span>
+        </fieldset>
+
+        <fieldset class="permission-section"><legend>Before you submit</legend>
+            <label class="check-label"><input type="checkbox" th:field="*{permissionConfirmed}" required><span>I have permission to share this material and it contains no private student information.</span></label>
+            <span class="field-error" th:errors="*{permissionConfirmed}" role="alert"></span>
+        </fieldset>
+        <div class="form-actions"><button class="button submit-upload" type="submit" id="submit-upload" th:text="${editing ? 'Submit changes for review' : 'Submit for review'}">Submit for review</button>
+            <a class="outline-button" th:href="${editing ? '/my-uploads' : '/resources'}">Cancel</a></div>
+        <p class="form-help">After saving, this resource is marked Pending. It appears to other students only after admin approval.</p>
+    </form>
+</main>
+<footer th:replace="~{fragments/layout :: siteFooter}"></footer>
+</body>
+</html>

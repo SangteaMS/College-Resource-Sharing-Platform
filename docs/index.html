@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="A browser-ready preview of the College Hub resource sharing project.">
+  <title>College Hub — Share what helps you learn</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <div class="demo-bar"><span class="live-dot"></span> BROWSER DEMO <span>This preview uses fictional sample resources. No account or database is connected.</span></div>
+  <header class="topbar">
+    <a class="brand" href="#top" aria-label="College Hub home"><span class="brand-mark">C</span>college<span class="brand-light">hub</span></a>
+    <nav aria-label="Main navigation"><a href="#subjects">Subjects</a><a href="#how">How it works</a><a class="button button-small" href="#resources">Browse resources</a></nav>
+  </header>
+
+  <main id="top">
+    <section class="hero">
+      <div>
+        <p class="eyebrow"><span class="live-dot"></span> MADE FOR OUR CAMPUS</p>
+        <h1>Good notes.<br><em>Better together.</em></h1>
+        <p class="intro">Find the notes, guides, and practice examples that make the next semester feel a little easier.</p>
+        <a class="button" href="#resources">Explore sample resources <span aria-hidden="true">→</span></a>
+        <p class="student-note">A student project, built together.</p>
+      </div>
+      <div class="hero-art" aria-label="Preview of study resources">
+        <div class="sun"></div>
+        <div class="floating-card back"><span class="file-icon purple">R</span><span><b>Statistics with R</b><small>Quick reference · Semester 2</small></span></div>
+        <div class="floating-card front"><span class="file-icon green">DB</span><span><b>DBMS revision notes</b><small>Study guide · Semester 2</small></span></div>
+        <span class="art-label">YOUR NEXT GREAT FIND IS HERE</span>
+      </div>
+    </section>
+
+    <section class="section" id="subjects">
+      <div class="section-heading"><div><p class="eyebrow">A LITTLE HEAD START</p><h2>Made for what you're learning.</h2></div><a class="text-link" href="#resources">See all resources →</a></div>
+      <div class="subject-grid">
+        <a class="subject-card" href="#resources" data-subject-link="Java"><span class="subject-icon">{ }</span><span><b>Java</b><small>Code, concepts &amp; examples</small></span><span class="arrow">↗</span></a>
+        <a class="subject-card" href="#resources" data-subject-link="DBMS"><span class="subject-icon gold">▤</span><span><b>DBMS</b><small>Queries, diagrams &amp; notes</small></span><span class="arrow">↗</span></a>
+        <a class="subject-card" href="#resources" data-subject-link="Open Source Application Development"><span class="subject-icon violet">⌘</span><span><b>Open Source</b><small>Tools, guides &amp; projects</small></span><span class="arrow">↗</span></a>
+        <a class="subject-card" href="#resources" data-subject-link="Statistics with R"><span class="subject-icon peach">⌁</span><span><b>Statistics with R</b><small>Scripts, charts &amp; explainers</small></span><span class="arrow">↗</span></a>
+      </div>
+    </section>
+
+    <section class="section resource-section" id="resources">
+      <div class="section-heading"><div><p class="eyebrow">THE STUDY SHELF</p><h2>Browse sample resources.</h2></div><span class="count" id="result-count" aria-live="polite"></span></div>
+      <form class="filters" id="filter-form">
+        <label class="search-label">Search<input id="search" type="search" placeholder="Try ‘loops’ or ‘SQL’"></label>
+        <label>Subject<select id="subject-filter"><option value="">All subjects</option></select></label>
+        <label>Semester<select id="semester-filter"><option value="">All semesters</option></select></label>
+        <label>Type<select id="type-filter"><option value="">All types</option></select></label>
+        <button class="button filter-button" type="submit">Apply filters</button>
+        <button class="clear-button" id="clear-filters" type="button">Clear</button>
+      </form>
+      <div class="resource-list" id="resource-list" aria-live="polite"></div>
+      <p class="demo-note">Sample content is fictional and runs entirely in your browser. Uploads, accounts, and database storage are not part of this preview.</p>
+    </section>
+
+    <section class="how" id="how"><span class="how-icon">↗</span><div><p class="eyebrow">SHARE A LITTLE, HELP A LOT</p><h2>One useful upload can help a whole class.</h2></div><p>The full project is planned to let students share academic resources, with uploads reviewed by an admin.</p></section>
+  </main>
+  <footer><a class="brand" href="#top"><span class="brand-mark">C</span>college<span class="brand-light">hub</span></a><span>Learn · Share · Grow</span><a href="#top">Back to top ↑</a></footer>
+</body>
+</html>

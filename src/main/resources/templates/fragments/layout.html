@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<body>
+<header class="topbar" th:fragment="siteHeader">
+    <a class="brand" th:href="@{/}" aria-label="CollegeHub home"><span class="brand-mark" aria-hidden="true">C</span><span>College<span class="brand-light">Hub</span></span></a>
+    <button class="nav-toggle" type="button" aria-controls="main-navigation" aria-expanded="false" aria-label="Open navigation" id="nav-toggle">
+        <span></span><span></span><span></span>
+    </button>
+    <nav class="primary-nav" id="main-navigation" aria-label="Main navigation">
+        <a class="nav-link" th:href="@{/resources}" th:classappend="${#strings.startsWith(currentPath, '/resources') ? ' active' : ''}" th:attr="aria-current=${#strings.startsWith(currentPath, '/resources') ? 'page' : null}">Browse resources</a>
+        <a class="nav-link" th:href="@{/question-papers}" th:classappend="${currentPath == '/question-papers' ? ' active' : ''}" th:attr="aria-current=${currentPath == '/question-papers' ? 'page' : null}">Question papers</a>
+        <a class="nav-link" th:if="${currentUser != null}" th:href="@{/my-uploads}" th:classappend="${#strings.startsWith(currentPath, '/my-uploads') ? ' active' : ''}" th:attr="aria-current=${#strings.startsWith(currentPath, '/my-uploads') ? 'page' : null}">My uploads</a>
+        <a class="nav-link" th:if="${isAdmin}" th:href="@{/admin/uploads}" th:classappend="${#strings.startsWith(currentPath, '/admin') ? ' active' : ''}">Review queue</a>
+        <a class="button button-small upload-nav" th:href="${currentUser != null ? '/uploads/new' : '/login?next=/uploads/new'}">Upload resource</a>
+        <details class="profile-menu" th:if="${currentUser != null}">
+            <summary th:text="${currentUser.fullName}">Your account</summary>
+            <div class="profile-menu-panel"><a th:href="@{/profile}" th:classappend="${currentPath == '/profile' ? ' active' : ''}">Profile</a>
+                <form th:action="@{/logout}" method="post"><button type="submit">Sign out</button></form></div>
+        </details>
+        <a class="nav-link" th:if="${currentUser == null}" th:href="@{/login}" th:classappend="${currentPath == '/login' ? ' active' : ''}">Log in</a>
+        <a class="nav-link" th:if="${currentUser == null}" th:href="@{/register}" th:classappend="${currentPath == '/register' ? ' active' : ''}">Register</a>
+    </nav>
+</header>
+<footer class="site-footer" th:fragment="siteFooter">
+    <a class="brand" th:href="@{/}"><span class="brand-mark" aria-hidden="true">C</span><span>College<span class="brand-light">Hub</span></span></a>
+    <span>Illustrative student resource library</span>
+    <span>Learn · Share · Grow</span>
+</footer>
+<script th:src="@{/js/catalogue.js}"></script>
+</body>
+</html>

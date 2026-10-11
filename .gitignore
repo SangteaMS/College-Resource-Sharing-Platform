@@ -1,0 +1,7 @@
+/target/
+/.m2/
+/data/
+/uploads/
+/.idea/
+*.iml
+.DS_Store
