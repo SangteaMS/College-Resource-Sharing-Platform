@@ -6,9 +6,9 @@ import java.nio.file.Files;
 
 import edu.collegehub.accounts.AppUser;
 import edu.collegehub.resources.Resource;
+import edu.collegehub.resources.ResourceNotFoundException;
 import edu.collegehub.resources.ResourceService;
 import edu.collegehub.resources.UploadStorageService;
-import jakarta.validation.constraints.Size;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -46,15 +46,39 @@ public class AdminController {
     }
     @PostMapping("/uploads/{id}/approve")
     public String approve(@PathVariable Long id, @AuthenticationPrincipal AppUser admin, RedirectAttributes redirect) {
-        resources.approve(id, admin);
-        redirect.addFlashAttribute("moderationMessage", "The resource is approved and now appears in public browsing.");
+        try {
+            resources.approve(id, admin);
+            redirect.addFlashAttribute("moderationMessage", "The resource is approved and now appears in public browsing.");
+        } catch (ResourceNotFoundException ex) {
+            redirect.addFlashAttribute("moderationError", "That submission is no longer pending or available for review. Refresh the queue and try again.");
+        }
         return "redirect:/admin/uploads";
     }
     @PostMapping("/uploads/{id}/reject")
-    public String reject(@PathVariable Long id, @RequestParam @Size(min = 3, max = 500) String reason,
+    public String reject(@PathVariable Long id, @RequestParam(required = false) String reason,
                          @AuthenticationPrincipal AppUser admin, RedirectAttributes redirect) {
-        resources.reject(id, reason, admin);
-        redirect.addFlashAttribute("moderationMessage", "The resource was rejected and the reason was sent to the contributor's My uploads page.");
+        try {
+            resources.reject(id, reason, admin);
+            redirect.addFlashAttribute("moderationMessage", "The resource was rejected and the reason was sent to the contributor's My uploads page.");
+        } catch (IllegalArgumentException ex) {
+            redirect.addFlashAttribute("moderationError", ex.getMessage());
+        } catch (ResourceNotFoundException ex) {
+            redirect.addFlashAttribute("moderationError", "That submission is no longer pending or available for review. Refresh the queue and try again.");
+        }
+        return "redirect:/admin/uploads";
+    }
+
+    @PostMapping("/uploads/{id}/remove")
+    public String remove(@PathVariable Long id, @RequestParam(required = false) String reason,
+                         @AuthenticationPrincipal AppUser admin, RedirectAttributes redirect) {
+        try {
+            resources.removeByAdmin(id, reason, admin);
+            redirect.addFlashAttribute("moderationMessage", "The resource was removed from public access. The uploader can see your reason in My uploads.");
+        } catch (IllegalArgumentException ex) {
+            redirect.addFlashAttribute("moderationError", ex.getMessage());
+        } catch (ResourceNotFoundException ex) {
+            redirect.addFlashAttribute("moderationError", "That resource is already removed or no longer exists.");
+        }
         return "redirect:/admin/uploads";
     }
 }

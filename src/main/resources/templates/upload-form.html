@@ -29,11 +29,23 @@
 
         <fieldset class="form-section"><legend>Course and subject</legend>
             <label for="upload-programme">Select course</label>
-            <select th:field="*{programmeId}" id="upload-programme" data-semester-target="upload-semester" data-subject-target="upload-subject" required><option value="">Choose a course</option><option th:each="option : ${programmes}" th:value="${option.id}" th:text="${option.name}"></option></select>
+            <select th:field="*{programmeId}" id="upload-programme" data-semester-target="upload-semester" required><option value="">Choose a course</option><option th:each="option : ${programmes}" th:value="${option.id}" th:text="${option.name}"></option></select>
             <span class="field-error" th:errors="*{programmeId}" role="alert"></span>
             <div class="form-row">
-                <div><label for="upload-semester">Semester</label><select th:field="*{semesterId}" id="upload-semester" data-selected="" data-semesters="true" data-subject-target="upload-subject" required><option value="">Choose a semester</option><option th:each="option : ${semesters}" th:value="${option.id}" th:text="${option.label}"></option></select><span class="field-error" th:errors="*{semesterId}" role="alert"></span></div>
-                <div><label for="upload-subject">Subject</label><select th:field="*{subjectId}" id="upload-subject" data-selected="" data-subjects="true" required><option value="">Choose a subject</option><option th:each="option : ${subjects}" th:value="${option.id}" th:text="${option.name + ' (' + option.code + ')'}"></option></select><span class="field-error" th:errors="*{subjectId}" role="alert"></span></div>
+                <div><label for="upload-semester">Semester</label><select th:field="*{semesterId}" id="upload-semester" data-selected="" data-semesters="true" required><option value="">Choose a semester</option><option th:each="option : ${semesters}" th:value="${option.id}" th:text="${option.label}"></option></select><span class="field-error" th:errors="*{semesterId}" role="alert"></span></div>
+                <div class="subject-search-field upload-subject-field">
+                    <label for="upload-subject">Subject</label>
+                    <input type="text" th:field="*{subjectName}" id="upload-subject" maxlength="150" required
+                           placeholder="Type a subject name" role="combobox" aria-autocomplete="list"
+                           aria-expanded="false" aria-controls="upload-subject-suggestions" autocomplete="off"
+                           aria-describedby="upload-subject-help upload-subject-error"
+                           data-subject-suggestions data-suggestion-list="upload-subject-suggestions"
+                           data-programme-source="upload-programme" data-semester-source="upload-semester" data-subject-mode="fill">
+                    <div class="subject-suggestions" id="upload-subject-suggestions" role="listbox" aria-label="Matching subjects" hidden></div>
+                    <small id="upload-subject-help" class="form-help">Choose a suggestion or enter a new subject name.</small>
+                    <span class="field-error" id="upload-subject-error" th:errors="*{subjectName}" role="alert"></span>
+                    <p class="suggestion-status" id="upload-subject-status" aria-live="polite"></p>
+                </div>
             </div>
             <label for="resource-type">Resource type</label>
             <select th:field="*{resourceType}" id="resource-type" required><option value="">Choose a type</option><option th:each="option : ${resourceTypes}" th:value="${option}" th:text="${option.label}"></option></select>

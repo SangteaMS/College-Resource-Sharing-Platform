@@ -14,8 +14,8 @@ public class UploadForm {
     private Long programmeId;
     @NotNull
     private Long semesterId;
-    @NotNull
-    private Long subjectId;
+    @NotBlank @Size(max = 150)
+    private String subjectName;
     @NotNull
     private ResourceType resourceType;
     @Size(max = 500)
@@ -34,8 +34,8 @@ public class UploadForm {
     public void setProgrammeId(Long programmeId) { this.programmeId = programmeId; }
     public Long getSemesterId() { return semesterId; }
     public void setSemesterId(Long semesterId) { this.semesterId = semesterId; }
-    public Long getSubjectId() { return subjectId; }
-    public void setSubjectId(Long subjectId) { this.subjectId = subjectId; }
+    public String getSubjectName() { return subjectName; }
+    public void setSubjectName(String subjectName) { this.subjectName = subjectName == null ? null : subjectName.trim(); }
     public ResourceType getResourceType() { return resourceType; }
     public void setResourceType(ResourceType resourceType) { this.resourceType = resourceType; }
     public String getDescription() { return description; }

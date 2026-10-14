@@ -2,7 +2,6 @@ package edu.collegehub.accounts;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 public class RegistrationForm {
@@ -12,9 +11,7 @@ public class RegistrationForm {
     private String email;
     @NotBlank @Size(min = 8, max = 72)
     private String password;
-    @NotNull
     private Long programmeId;
-    @NotNull
     private Long semesterId;
 
     public String getFullName() { return fullName; }

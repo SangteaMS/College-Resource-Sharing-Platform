@@ -23,6 +23,10 @@ public class Semester {
     private int number;
 
     protected Semester() { }
+    public Semester(Programme programme, int number) {
+        this.programme = programme;
+        this.number = number;
+    }
     public Long getId() { return id; }
     public Programme getProgramme() { return programme; }
     public int getNumber() { return number; }

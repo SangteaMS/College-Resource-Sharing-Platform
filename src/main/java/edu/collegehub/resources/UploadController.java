@@ -148,12 +148,11 @@ public class UploadController {
     }
 
     private void validateCatalogueAndPaper(UploadForm form, BindingResult binding) {
-        try {
-            if (form.getProgrammeId() != null && form.getSemesterId() != null && form.getSubjectId() != null) {
-                catalogue.requireSubject(form.getProgrammeId(), form.getSemesterId(), form.getSubjectId());
-            }
-        } catch (IllegalArgumentException ex) {
-            binding.reject("catalogue", ex.getMessage());
+        if (form.getProgrammeId() != null && catalogue.activeProgramme(form.getProgrammeId()) == null) {
+            binding.rejectValue("programmeId", "invalid", "Choose a valid course.");
+        } else if (form.getProgrammeId() != null && form.getSemesterId() != null
+                && !catalogue.validSelection(form.getProgrammeId(), form.getSemesterId(), null)) {
+            binding.rejectValue("semesterId", "invalid", "Choose a semester belonging to the selected course.");
         }
         if (form.getResourceType() == ResourceType.QUESTION_PAPER) {
             if (form.getExamYear() == null) binding.rejectValue("examYear", "required", "Enter the exam year.");
@@ -168,7 +167,7 @@ public class UploadController {
         UploadForm form = new UploadForm();
         form.setTitle(resource.getTitle()); form.setDescription(resource.getDescription());
         form.setProgrammeId(resource.getProgramme().getId()); form.setSemesterId(resource.getSemester().getId());
-        form.setSubjectId(resource.getSubject().getId()); form.setResourceType(resource.getResourceType());
+        form.setSubjectName(resource.getSubject().getName()); form.setResourceType(resource.getResourceType());
         form.setExamYear(resource.getExamYear()); form.setExamType(resource.getExamType()); form.setExamSession(resource.getExamSession());
         form.setPermissionConfirmed(false);
         return form;
@@ -176,10 +175,8 @@ public class UploadController {
     private void populateFormOptions(UploadForm form, Model model) {
         model.addAttribute("programmes", catalogue.programmes());
         model.addAttribute("semesters", catalogue.semesterOptions(form.getProgrammeId()));
-        model.addAttribute("subjects", catalogue.subjectOptions(form.getProgrammeId(), form.getSemesterId()));
-        model.addAttribute("resourceTypes", List.of(ResourceType.NOTES, ResourceType.QUESTION_PAPER, ResourceType.PRESENTATION,
-                ResourceType.STUDY_GUIDE, ResourceType.PRACTICE_MATERIAL, ResourceType.LAB_PRACTICAL_MATERIAL));
-        model.addAttribute("examTypes", List.of(ExamType.MID_TERM, ExamType.END_TERM, ExamType.OTHER));
+        model.addAttribute("resourceTypes", List.of(ResourceType.values()));
+        model.addAttribute("examTypes", List.of(ExamType.values()));
         model.addAttribute("maxUploadSize", maxUploadSize);
     }
 }

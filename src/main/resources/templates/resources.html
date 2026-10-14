@@ -2,37 +2,40 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-    <title th:text="${papersOnly ? 'Question papers | College Hub' : 'Browse resources | College Hub'}">Browse resources | College Hub</title>
+    <title th:text="${papersOnly ? 'Past papers | CollegeHub' : 'Browse resources | CollegeHub'}">Browse resources | CollegeHub</title>
     <link rel="stylesheet" th:href="@{/css/styles.css}">
 </head>
 <body th:attr="data-signed-in=${currentUser != null}">
 <header th:replace="~{fragments/layout :: siteHeader}"></header>
 <main class="catalogue">
     <p class="eyebrow" th:text="${papersOnly ? 'STUDENT-CONTRIBUTED ARCHIVE' : 'THE STUDY SHELF'}">THE STUDY SHELF</p>
-    <h1 class="page-title" th:text="${papersOnly ? 'Question papers.' : 'Browse resources.'}">Browse resources.</h1>
-    <p class="page-intro" th:if="${papersOnly}">Find previous question papers shared by students for their programme and semester. Approved means reviewed under the site’s sharing rules; it does not mean faculty-verified or official.</p>
-    <p class="page-intro" th:unless="${papersOnly}">Search resources by title, subject, subject code, or description. Choose a course, semester, subject, and type to narrow the list.</p>
+    <h1 class="page-title" th:text="${papersOnly ? 'Past papers.' : 'Browse resources.'}">Browse resources.</h1>
+    <p class="page-intro" th:if="${papersOnly}">Find student-contributed mid-term, internal, class-test, and end-term papers by course, semester, subject, exam type, or year. Approval allows sharing; it does not mean a paper is official or faculty-verified.</p>
+    <p class="page-intro" th:unless="${papersOnly}">Search all resource types by title, subject, course, file name, description, or exam details. Add filters to narrow the results.</p>
 
     <form class="filters" th:action="${browsePath}" method="get" id="resource-filter-form">
-        <label class="search-label">Search
-            <input type="search" name="q" placeholder="Search notes, subjects, or question papers…" th:value="${q}">
-        </label>
+        <div class="search-label subject-search-field">
+            <label for="resource-query">Search resources or subjects</label>
+            <input type="search" id="resource-query" name="q" placeholder="Try database, mathematics, biology PPT, or a year"
+                   th:value="${q != '' ? q : selectedSubjectName}" role="combobox" aria-autocomplete="list"
+                   aria-expanded="false" aria-controls="resource-subject-suggestions" aria-describedby="resource-subject-status" autocomplete="off"
+                   data-subject-suggestions data-suggestion-list="resource-subject-suggestions"
+                   data-programme-source="filter-programme" data-semester-source="filter-semester"
+                   data-subject-target="resource-subject-id" data-subject-mode="filter">
+            <input type="hidden" name="subjectId" id="resource-subject-id" th:value="${subjectId != null ? subjectId : ''}">
+            <div class="subject-suggestions" id="resource-subject-suggestions" role="listbox" aria-label="Matching subjects" hidden></div>
+            <p class="suggestion-status" id="resource-subject-status" aria-live="polite"></p>
+        </div>
         <label>Select course
-            <select name="programmeId" id="filter-programme" data-semester-target="filter-semester" data-subject-target="filter-subject">
+            <select name="programmeId" id="filter-programme" data-semester-target="filter-semester">
                 <option value="">All courses</option>
                 <option th:each="option : ${programmes}" th:value="${option.id}" th:text="${option.name}" th:selected="${option.id == programmeId}"></option>
             </select>
         </label>
         <label>Semester
-            <select name="semesterId" id="filter-semester" data-selected="" data-subject-target="filter-subject" data-semesters="true">
+            <select name="semesterId" id="filter-semester" data-selected="" data-semesters="true">
                 <option value="">All semesters</option>
                 <option th:each="option : ${semesters}" th:value="${option.id}" th:text="${option.label}" th:selected="${option.id == semesterId}"></option>
-            </select>
-        </label>
-        <label>Subject
-            <select name="subjectId" id="filter-subject" data-selected="" data-subjects="true">
-                <option value="">All subjects</option>
-                <option th:each="option : ${subjects}" th:value="${option.id}" th:text="${option.name + ' (' + option.code + ')'}" th:selected="${option.id == subjectId}" th:attr="data-semester-id=${option.semesterId}"></option>
             </select>
         </label>
         <label th:if="${!papersOnly}">Resource type
@@ -49,8 +52,8 @@
         </label>
         <input th:if="${papersOnly}" type="hidden" name="type" value="QUESTION_PAPER">
         <input th:if="${allCourses}" type="hidden" name="allCourses" value="true">
-        <button class="button filter-button" type="submit">Apply filters</button>
-        <a class="clear-filter" th:href="${browsePath + '?allCourses=true'}">Reset all</a>
+        <button class="button filter-button" type="submit">Search and filter</button>
+        <a class="clear-filter" th:href="${browsePath + '?allCourses=true'}">Clear filters</a>
     </form>
 
     <div class="active-filters" th:if="${q != '' or programmeId != null or semesterId != null or subjectId != null or (type != null and !papersOnly) or examYear != null or examType != null}">
@@ -70,24 +73,23 @@
             <span class="file-icon format-icon" th:text="${item.fileFormat.extension.toUpperCase()}">PDF</span>
             <div class="resource-info">
                 <p class="resource-meta resource-classification"><span th:text="${item.programme.name}">Programme</span><span th:text="${item.semester.label}">Semester</span><span th:text="${item.subject.code + ' · ' + item.subject.name}">Subject</span></p>
-                <h2><a th:href="@{/resources/{id}(id=${item.id},returnTo=${returnTo})}" th:text="${item.title}">Resource title</a></h2>
+                <h2><a th:href="@{/resources/{id}(id=${item.id},returnTo=${returnTo})}" th:text="${#strings.startsWith(item.title, 'Demo: ') ? #strings.substring(item.title, 6) : item.title}">Resource title</a></h2>
                 <div class="resource-labels"><span class="type-badge" th:attr="data-type=${item.resourceType.name()}" th:text="${item.resourceType.label}">Notes</span>
-                    <span class="contributed-label" th:if="${item.resourceType.name() == 'QUESTION_PAPER' and !item.demoResource}">Student-contributed</span>
-                    <span class="demo-label" th:if="${item.resourceType.name() == 'QUESTION_PAPER' and item.demoResource}">Fictional sample · not official</span></div>
-                <p class="resource-description" th:if="${item.description != null}" th:text="${item.description}">A short description of this resource.</p>
-                <p class="question-summary" th:if="${item.resourceType.name() == 'QUESTION_PAPER'}"><strong th:text="${item.examType.label + ' · ' + item.examYear}">Mid-term · 2025</strong><span th:if="${item.examSession != null}" th:text="${' · ' + item.examSession}"></span><span th:if="${!item.demoResource}"> · Student contributed; not faculty-verified</span></p>
+                    <span class="contributed-label" th:if="${item.resourceType.name() == 'QUESTION_PAPER'}">Student-contributed</span></div>
+                <p class="resource-description" th:if="${item.description != null and not #strings.startsWith(item.title, 'Demo: ')}" th:text="${item.description}">A short description of this resource.</p>
+                <p class="question-summary" th:if="${item.resourceType.name() == 'QUESTION_PAPER'}"><strong th:text="${item.examType.label + ' · ' + item.examYear}">Mid-term · 2025</strong><span th:if="${item.examSession != null}" th:text="${' · ' + item.examSession}"></span><span> · Not faculty-verified</span></p>
                 <p class="resource-meta resource-file-meta"><span th:text="${#numbers.formatDecimal(item.fileSizeBytes / 1024.0, 1, 1) + ' KB'}">File size</span><span>Uploaded <time th:datetime="${item.uploadedAt}" th:text="${#temporals.format(item.uploadedAt, 'd MMM yyyy')}">date</time></span></p>
             </div>
             <div class="resource-actions"><a class="outline-button" th:href="@{/resources/{id}(id=${item.id},returnTo=${returnTo})}">View details</a><a class="button button-small" th:href="@{/resources/{id}/download(id=${item.id})}">Download</a></div>
         </article>
-        <div class="empty-state" th:if="${resources.isEmpty()}"><h2>No matching resources yet</h2><p>Try a different course or remove a filter. Only published, approved resources appear here.</p><a class="button" th:href="${browsePath + '?allCourses=true'}">Reset filters</a></div>
+        <div class="empty-state" th:if="${resources.isEmpty()}"><h2>No resources match this search</h2><p>Try another term or clear a filter. New student uploads appear after admin approval.</p><div class="empty-actions"><a class="outline-button" th:href="${browsePath + '?allCourses=true'}">Clear filters</a><a class="button" th:href="${currentUser != null ? '/uploads/new' : '/login?next=/uploads/new'}">Upload resource</a></div></div>
     </section>
     <nav class="pagination" th:if="${resourcePage.totalPages > 1}" aria-label="Results pages">
         <a th:if="${resourcePage.hasPrevious()}" th:href="@{${browsePath}(q=${q},programmeId=${programmeId},semesterId=${semesterId},subjectId=${subjectId},type=${type},examYear=${examYear},examType=${examType},sort=${sort},allCourses=${allCourses},page=${resourcePage.number - 1})}">← Previous</a>
         <span th:text="${'Page ' + (resourcePage.number + 1) + ' of ' + resourcePage.totalPages}">Page 1</span>
         <a th:if="${resourcePage.hasNext()}" th:href="@{${browsePath}(q=${q},programmeId=${programmeId},semesterId=${semesterId},subjectId=${subjectId},type=${type},examYear=${examYear},examType=${examType},sort=${sort},allCourses=${allCourses},page=${resourcePage.number + 1})}">Next →</a>
     </nav>
-    <p class="demo-note">Demo course and subject categories are illustrative, not verified official curricula. Question papers are student-contributed samples; approval is not a claim of official or faculty verification.</p>
+    <p class="demo-note">Course and subject examples are illustrative. Practice papers are fictional examples, not authentic university papers.</p>
 </main>
 <footer th:replace="~{fragments/layout :: siteFooter}"></footer>
 </body>

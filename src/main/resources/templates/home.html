@@ -2,71 +2,86 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="Find notes, presentations, and previous question papers shared by students.">
-    <title>CollegeHub | Study resources for your course</title>
+    <meta name="description" content="Browse, search, and share academic resources with CollegeHub.">
+    <title>CollegeHub | Academic resources</title>
     <link rel="stylesheet" th:href="@{/css/styles.css}">
 </head>
 <body th:attr="data-signed-in=${currentUser != null}">
 <header th:replace="~{fragments/layout :: siteHeader}"></header>
 <main class="home-main">
-    <div class="notice notice-success" th:if="${param.loggedOut}">You are signed out. Approved resources are still open to browse.</div>
+    <div class="notice notice-success" th:if="${param.loggedOut}">You are signed out. Approved resources are open to browse.</div>
     <section class="home-hero">
         <div class="home-intro">
-            <p class="eyebrow">STUDENT-SHARED STUDY MATERIAL</p>
-            <h1>Study resources<br><span>for your course.</span></h1>
-            <p class="home-lede">Find notes, presentations, and previous question papers shared by students.</p>
+            <p class="eyebrow">COLLEGE RESOURCE SHARING</p>
+            <h1>Browse, search,<br><span>and share resources.</span></h1>
+            <p class="home-lede">Find notes, presentations, assignments, study materials, and past papers shared by students across programmes.</p>
             <form class="home-course-form" th:action="@{/resources}" method="get" id="home-course-form">
-                <label for="home-programme">Select course</label>
-                <select name="programmeId" id="home-programme" data-semester-target="home-semester">
-                    <option value="">All courses</option>
-                    <option th:each="programme : ${programmes}" th:value="${programme.id}" th:text="${programme.name}" th:selected="${programme.id == preferredProgrammeId}">BCA</option>
-                </select>
-                <select name="semesterId" id="home-semester" aria-label="Semester" data-selected="" data-semesters="true">
-                    <option value="">All semesters</option>
-                    <option th:each="semester : ${preferredSemesters}" th:value="${semester.id}" th:text="${semester.label}" th:selected="${semester.id == preferredSemesterId}">Semester 1</option>
-                </select>
-                <button class="button" type="submit">Browse resources</button>
+                <div class="subject-search-field home-subject-search">
+                    <label for="home-query">Search resources or subjects</label>
+                    <input type="search" id="home-query" name="q" placeholder="Try database, mathematics, or Java notes"
+                           role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="home-subject-suggestions" aria-describedby="home-subject-status"
+                           autocomplete="off" data-subject-suggestions data-suggestion-list="home-subject-suggestions"
+                           data-programme-source="home-programme" data-semester-source="home-semester"
+                           data-subject-target="home-subject-id" data-subject-mode="filter">
+                    <input type="hidden" name="subjectId" id="home-subject-id">
+                    <div class="subject-suggestions" id="home-subject-suggestions" role="listbox" aria-label="Matching subjects" hidden></div>
+                    <p class="suggestion-status" id="home-subject-status" aria-live="polite"></p>
+                </div>
+                <label for="home-programme">Select course
+                    <select name="programmeId" id="home-programme" data-semester-target="home-semester">
+                        <option value="">All courses</option>
+                        <option th:each="programme : ${programmes}" th:value="${programme.id}" th:text="${programme.name}" th:selected="${programme.id == preferredProgrammeId}">BCA</option>
+                    </select>
+                </label>
+                <label for="home-semester">Semester
+                    <select name="semesterId" id="home-semester" data-selected="" data-semesters="true">
+                        <option value="">All semesters</option>
+                        <option th:each="semester : ${preferredSemesters}" th:value="${semester.id}" th:text="${semester.label}" th:selected="${semester.id == preferredSemesterId}">Semester 1</option>
+                    </select>
+                </label>
+                <div class="home-actions">
+                    <button class="button" type="submit">Browse resources</button>
+                    <a class="outline-button" th:href="${currentUser != null ? '/uploads/new' : '/login?next=/uploads/new'}">Upload resource</a>
+                </div>
             </form>
-            <a class="home-upload-link" th:href="${currentUser != null ? '/uploads/new' : '/login?next=/uploads/new'}">Upload resource</a>
-        </div>
-        <div class="sample-stack" aria-label="Illustrative sample resources">
-            <article class="sample-card">
-                <div class="sample-card-heading"><span class="format-mark format-notes">NOTES</span><span class="sample-label">Sample</span></div>
-                <h2>Political Theory</h2><p>B.A. Political Science <span>·</span> Revision Notes</p>
-            </article>
-            <article class="sample-card sample-card-offset">
-                <div class="sample-card-heading"><span class="format-mark format-paper">PAPER</span><span class="sample-label">Sample</span></div>
-                <h2>Cell Biology</h2><p>B.Sc. Biotechnology <span>·</span> Mid-term Practice Paper</p>
-            </article>
-            <p class="sample-disclaimer">Fictional examples · not official course material</p>
         </div>
     </section>
 
     <section class="programme-section" aria-labelledby="programme-title">
         <div class="section-heading">
-            <div><p class="eyebrow">FIND YOUR PLACE</p><h2 id="programme-title">Browse by course.</h2></div>
-            <span class="section-aside">Choose a programme to see its resources</span>
+            <div><p class="eyebrow">BROWSE BY COURSE</p><h2 id="programme-title">Choose a programme.</h2></div>
+            <span class="section-aside">Each link opens resources for that course</span>
         </div>
         <div class="programme-grid">
-            <a class="programme-card" th:each="programme : ${programmes}" th:href="@{/resources(programmeId=${programme.id})}">
+            <a class="programme-card" th:each="programme, iterStat : ${programmes}" th:if="${iterStat.index < 10}" th:href="@{/resources(programmeId=${programme.id})}">
                 <span class="programme-code" th:text="${programme.code}">BCA</span>
-                <span class="programme-name" th:text="${programme.name}">Bachelor's programme</span>
+                <span class="programme-name" th:text="${programme.name}">Programme</span>
                 <span class="programme-action">Browse resources <span aria-hidden="true">→</span></span>
             </a>
         </div>
-        <p class="demo-note">Programme and subject examples are illustrative, not verified official curricula.</p>
+        <details class="programme-more" th:if="${#lists.size(programmes) > 10}">
+            <summary class="outline-button programme-toggle"><span class="show-all-courses">View all courses</span><span class="show-fewer-courses">Show fewer</span></summary>
+            <div class="programme-grid programme-extra-grid">
+                <a class="programme-card" th:each="programme, iterStat : ${programmes}" th:if="${iterStat.index >= 10}" th:href="@{/resources(programmeId=${programme.id})}">
+                    <span class="programme-code" th:text="${programme.code}">BCA</span>
+                    <span class="programme-name" th:text="${programme.name}">Programme</span>
+                    <span class="programme-action">Browse resources <span aria-hidden="true">→</span></span>
+                </a>
+            </div>
+        </details>
+        <p class="demo-note">Programme and subject categories are illustrative and may differ from official curricula.</p>
     </section>
 
     <section class="papers-callout">
-        <div><p class="eyebrow">PASS LEARNING FORWARD</p><h2>Previous papers, passed forward.</h2>
-            <p>Share past mid-term and end-term papers to help the next batch prepare.</p></div>
-        <div class="callout-actions"><a class="button" th:href="@{/question-papers}">Browse question papers</a>
+        <div><p class="eyebrow">PAST PAPERS</p><h2>Share a paper with the next batch.</h2>
+            <p>Find previous exams by course, semester, subject, exam type, or year.</p></div>
+        <div class="callout-actions"><a class="button" th:href="@{/question-papers(allCourses=true)}">Browse past papers</a>
             <a class="outline-button" th:href="${currentUser != null ? '/uploads/new?type=QUESTION_PAPER' : '/login?next=/uploads/new?type=QUESTION_PAPER'}">Upload a paper</a></div>
     </section>
 
     <section class="contribution-banner">
-        <div><p class="eyebrow">SHARE WHAT HELPED YOU</p><h2>One useful resource can help a whole class.</h2>
-            <p>Student uploads are reviewed before they appear in public browsing.</p></div>
+        <div><p class="eyebrow">SHARE ACADEMIC MATERIAL</p><h2>Help make useful resources easier to find.</h2>
+            <p>Uploads are reviewed before they appear in public browsing.</p></div>
         <a class="button" th:href="${currentUser != null ? '/uploads/new' : '/login?next=/uploads/new'}">Upload resource <span aria-hidden="true">→</span></a>
     </section>
 </main>

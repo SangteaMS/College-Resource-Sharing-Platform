@@ -62,6 +62,12 @@ public class Resource {
     private AppUser reviewedBy;
     @Column(name = "reviewed_at")
     private LocalDateTime reviewedAt;
+    @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "removed_by")
+    private AppUser removedBy;
+    @Column(name = "removed_at")
+    private LocalDateTime removedAt;
+    @Column(name = "removal_reason", length = 500)
+    private String removalReason;
     @Column(name = "download_count", nullable = false)
     private long downloadCount;
     @Column(name = "demo_resource", nullable = false)
@@ -69,7 +75,7 @@ public class Resource {
     @Column(nullable = false)
     private boolean removed;
 
-    protected Resource() { }
+    public Resource() { }
     @PrePersist void onCreate() { if (uploadedAt == null) uploadedAt = LocalDateTime.now(); }
 
     public Long getId() { return id; }
@@ -92,6 +98,9 @@ public class Resource {
     public LocalDateTime getUploadedAt() { return uploadedAt; }
     public AppUser getReviewedBy() { return reviewedBy; }
     public LocalDateTime getReviewedAt() { return reviewedAt; }
+    public AppUser getRemovedBy() { return removedBy; }
+    public LocalDateTime getRemovedAt() { return removedAt; }
+    public String getRemovalReason() { return removalReason; }
     public long getDownloadCount() { return downloadCount; }
     public boolean isDemoResource() { return demoResource; }
     public boolean isRemoved() { return removed; }
@@ -128,4 +137,10 @@ public class Resource {
     }
     public void recordDownload() { downloadCount++; }
     public void markRemoved() { removed = true; }
+    public void markRemovedByAdmin(AppUser admin, String reason) {
+        removed = true;
+        removedBy = admin;
+        removedAt = LocalDateTime.now();
+        removalReason = reason;
+    }
 }

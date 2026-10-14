@@ -38,19 +38,9 @@
     }
   }
 
-  async function loadSemesters(programmeId, select, selectedId = "") {
-    if (!programmeId) { fillSelect(select, [], "All semesters"); return; }
-    fillSelect(select, await loadOptions(`/api/catalog/programmes/${programmeId}/semesters`), "All semesters", selectedId);
-  }
-
-  async function loadSubjects(programmeId, semesterId, select, selectedId = "") {
-    if (!programmeId) { fillSelect(select, [], "All subjects"); return; }
-    if (!semesterId) {
-      const all = await loadOptions(`/api/catalog/programmes/${programmeId}/subjects`);
-      fillSelect(select, all, "All subjects", selectedId);
-      return;
-    }
-    fillSelect(select, await loadOptions(`/api/catalog/semesters/${semesterId}/subjects`), "All subjects", selectedId);
+  async function loadSemesters(programmeId, select, selectedId = "", placeholder = "All semesters") {
+    if (!programmeId) { fillSelect(select, [], placeholder); return; }
+    fillSelect(select, await loadOptions(`/api/catalog/programmes/${programmeId}/semesters`), placeholder, selectedId);
   }
 
   const homeCourse = document.getElementById("home-programme");
@@ -97,7 +87,6 @@
 
   const programmeFilter = document.getElementById("filter-programme");
   const semesterFilter = document.getElementById("filter-semester");
-  const subjectFilter = document.getElementById("filter-subject");
   const resourceForm = document.getElementById("resource-filter-form");
   const query = new URLSearchParams(window.location.search);
   if (resourceForm && !isSignedIn && !query.has("programmeId") && query.get("allCourses") !== "true") {
@@ -120,21 +109,150 @@
         localStorage.removeItem(preferenceSemester);
       }
       await loadSemesters(programmeId, semesterFilter);
-      await loadSubjects(programmeId, "", subjectFilter);
     });
     semesterFilter?.addEventListener("change", async () => {
       if (!isSignedIn) {
         if (semesterFilter.value) localStorage.setItem(preferenceSemester, semesterFilter.value);
         else localStorage.removeItem(preferenceSemester);
       }
-      await loadSubjects(programmeFilter.value, semesterFilter.value, subjectFilter);
-    });
-    subjectFilter?.addEventListener("change", () => {
-      const chosen = subjectFilter.selectedOptions[0];
-      if (chosen?.dataset.semesterId && !semesterFilter.value) semesterFilter.value = chosen.dataset.semesterId;
-      if (!isSignedIn && semesterFilter.value) localStorage.setItem(preferenceSemester, semesterFilter.value);
     });
   }
+
+  document.querySelectorAll("[data-subject-suggestions]").forEach(input => {
+    const list = document.getElementById(input.dataset.suggestionList);
+    const form = input.form;
+    const hidden = input.dataset.subjectTarget ? document.getElementById(input.dataset.subjectTarget) : null;
+    const programme = input.dataset.programmeSource ? document.getElementById(input.dataset.programmeSource) : null;
+    const semester = input.dataset.semesterSource ? document.getElementById(input.dataset.semesterSource) : null;
+    const status = document.getElementById(`${list?.id.replace("-suggestions", "")}-status`);
+    if (!list || !form) return;
+
+    let matches = [];
+    let activeIndex = -1;
+    let requestNumber = 0;
+    let timer;
+    let selectedText = hidden?.value ? input.value : "";
+    const close = () => {
+      list.hidden = true;
+      input.setAttribute("aria-expanded", "false");
+      input.removeAttribute("aria-activedescendant");
+      activeIndex = -1;
+    };
+    const open = () => {
+      list.hidden = false;
+      input.setAttribute("aria-expanded", "true");
+    };
+    const showNoMatches = message => {
+      list.replaceChildren();
+      const option = document.createElement("div");
+      option.className = "suggestion-empty";
+      option.setAttribute("role", "option");
+      option.setAttribute("aria-disabled", "true");
+      option.textContent = message;
+      list.append(option);
+      open();
+    };
+    const setActive = index => {
+      if (!matches.length) return;
+      activeIndex = (index + matches.length) % matches.length;
+      list.querySelectorAll('[role="option"][data-index]').forEach(option => {
+        const active = Number(option.dataset.index) === activeIndex;
+        option.setAttribute("aria-selected", String(active));
+      });
+      input.setAttribute("aria-activedescendant", `${list.id}-option-${activeIndex}`);
+    };
+    const choose = subject => {
+      input.value = subject.name;
+      selectedText = subject.name;
+      if (hidden) hidden.value = String(subject.id);
+      if (status) status.textContent = "";
+      close();
+      if (input.dataset.subjectMode === "filter") form.requestSubmit();
+    };
+    const loadSuggestions = async () => {
+      const term = input.value.trim();
+      if (hidden && term !== selectedText) hidden.value = "";
+      if (status) status.textContent = "";
+      if (term.length < 2) { close(); return; }
+      const currentRequest = ++requestNumber;
+      const params = new URLSearchParams({ q: term });
+      if (programme?.value) params.set("programmeId", programme.value);
+      if (semester?.value) params.set("semesterId", semester.value);
+      try {
+        const response = await fetch(`/api/catalog/subjects/suggestions?${params}`, { headers: { Accept: "application/json" } });
+        if (!response.ok) throw new Error("Subject suggestions unavailable");
+        const results = await response.json();
+        if (currentRequest !== requestNumber) return;
+        matches = results;
+        list.replaceChildren();
+        if (!matches.length) {
+          showNoMatches("No matching subjects. Press Enter to search resources for this keyword.");
+          return;
+        }
+        matches.forEach((subject, index) => {
+          const option = document.createElement("button");
+          option.type = "button";
+          option.id = `${list.id}-option-${index}`;
+          option.className = "subject-suggestion";
+          option.setAttribute("role", "option");
+          option.setAttribute("aria-selected", "false");
+          option.dataset.index = String(index);
+          const name = document.createElement("span");
+          name.className = "subject-suggestion-name";
+          name.textContent = subject.name;
+          const details = document.createElement("span");
+          details.className = "subject-suggestion-details";
+          details.textContent = `${subject.programme} · ${subject.semester}${subject.code ? ` · ${subject.code}` : ""}`;
+          option.append(name, details);
+          option.addEventListener("mousedown", event => event.preventDefault());
+          option.addEventListener("click", () => choose(subject));
+          list.append(option);
+        });
+        activeIndex = -1;
+        open();
+      } catch {
+        if (currentRequest !== requestNumber) return;
+        matches = [];
+        close();
+        if (status) status.textContent = "Subject suggestions could not load. You can still search using this keyword.";
+      }
+    };
+    const scheduleSuggestions = () => {
+      clearTimeout(timer);
+      requestNumber++;
+      matches = [];
+      close();
+      timer = setTimeout(loadSuggestions, 180);
+    };
+
+    input.addEventListener("input", () => {
+      if (hidden && input.value !== selectedText) {
+        hidden.value = "";
+        selectedText = "";
+      }
+      scheduleSuggestions();
+    });
+    input.addEventListener("keydown", event => {
+      if (event.key === "ArrowDown" && !list.hidden && matches.length) {
+        event.preventDefault(); setActive(activeIndex + 1);
+      } else if (event.key === "ArrowUp" && !list.hidden && matches.length) {
+        event.preventDefault(); setActive(activeIndex < 0 ? matches.length - 1 : activeIndex - 1);
+      } else if (event.key === "Enter" && !list.hidden && activeIndex >= 0 && matches[activeIndex]) {
+        event.preventDefault(); choose(matches[activeIndex]);
+      } else if (event.key === "Escape" && !list.hidden) {
+        event.preventDefault(); close();
+      }
+    });
+    input.addEventListener("blur", () => setTimeout(close, 100));
+    [programme, semester].filter(Boolean).forEach(select => select.addEventListener("change", () => {
+      requestNumber++;
+      clearTimeout(timer);
+      if (hidden) hidden.value = "";
+      selectedText = "";
+      matches = [];
+      close();
+    }));
+  });
 
   const profileProgramme = document.getElementById("profile-programme");
   const profileSemester = document.getElementById("profile-semester");
@@ -142,26 +260,93 @@
 
   const registrationProgramme = document.getElementById("registration-programme");
   const registrationSemester = document.getElementById("registration-semester");
-  if (registrationProgramme && registrationSemester && registrationProgramme.value) {
-    const selected = registrationSemester.value;
-    loadSemesters(registrationProgramme.value, registrationSemester, selected).catch(() => {});
+  const registrationForm = registrationProgramme?.form;
+  const registrationProgrammeError = document.getElementById("registration-programme-error");
+  const registrationSemesterError = document.getElementById("registration-semester-error");
+  const registrationSemesterHelp = document.getElementById("registration-semester-help");
+  let registrationLoadNumber = 0;
+  function clearRegistrationErrors() {
+    registrationProgramme?.setCustomValidity("");
+    registrationSemester?.setCustomValidity("");
+    if (registrationProgrammeError) registrationProgrammeError.textContent = "";
+    if (registrationSemesterError) registrationSemesterError.textContent = "";
+    registrationProgramme?.removeAttribute("aria-invalid");
+    registrationSemester?.removeAttribute("aria-invalid");
   }
-  registrationProgramme?.addEventListener("change", () => loadSemesters(registrationProgramme.value, registrationSemester));
+  async function updateRegistrationSemesters(preserveSelected = false) {
+    if (!registrationProgramme || !registrationSemester) return;
+    const loadNumber = ++registrationLoadNumber;
+    const programmeId = registrationProgramme.value;
+    const priorSemester = preserveSelected ? registrationSemester.value : "";
+    registrationSemester.disabled = true;
+    if (!programmeId) {
+      fillSelect(registrationSemester, [], "Choose a programme first");
+      registrationSemester.disabled = !priorSemester;
+      if (registrationSemesterHelp) {
+        registrationSemesterHelp.textContent = priorSemester
+          ? "Choose the programme that matches this semester, or clear the semester."
+          : "Select a programme to load its available semesters.";
+      }
+      return;
+    }
+    fillSelect(registrationSemester, [], "Loading semesters…");
+    if (registrationSemesterHelp) registrationSemesterHelp.textContent = "Loading semesters for the selected programme…";
+    try {
+      const items = await loadOptions(`/api/catalog/programmes/${programmeId}/semesters`);
+      if (loadNumber !== registrationLoadNumber) return;
+      fillSelect(registrationSemester, items, items.length ? "Choose semester (optional)" : "No semesters available", priorSemester);
+      registrationSemester.disabled = items.length === 0;
+      if (registrationSemesterHelp) {
+        registrationSemesterHelp.textContent = items.length
+          ? "Choose a semester, or leave both academic details blank."
+          : "This programme has no semesters available. Choose another programme or leave both blank.";
+      }
+    } catch {
+      if (loadNumber !== registrationLoadNumber) return;
+      fillSelect(registrationSemester, [], "Could not load semesters");
+      registrationSemester.disabled = true;
+      if (registrationSemesterHelp) registrationSemesterHelp.textContent = "Could not load semesters. Check your connection and choose the programme again.";
+    }
+  }
+  if (registrationProgramme && registrationSemester) {
+    if (registrationProgramme.value) {
+      updateRegistrationSemesters(true);
+    } else if (!registrationSemester.value) {
+      registrationSemester.disabled = true;
+    }
+    registrationProgramme.addEventListener("change", () => {
+      clearRegistrationErrors();
+      updateRegistrationSemesters(false);
+    });
+    registrationSemester.addEventListener("change", clearRegistrationErrors);
+    registrationForm?.addEventListener("submit", event => {
+      clearRegistrationErrors();
+      if (registrationProgramme.value && !registrationSemester.value) {
+        const message = "Choose a current semester for this programme, or clear the programme.";
+        if (registrationSemesterError) registrationSemesterError.textContent = message;
+        registrationSemester?.setAttribute("aria-invalid", "true");
+        registrationSemester?.setCustomValidity(message);
+        event.preventDefault();
+        if (!registrationSemester.disabled) registrationSemester.reportValidity();
+        else registrationProgramme.focus();
+      } else if (!registrationProgramme.value && registrationSemester.value) {
+        const message = "Choose the programme that this semester belongs to.";
+        if (registrationProgrammeError) registrationProgrammeError.textContent = message;
+        registrationProgramme?.setAttribute("aria-invalid", "true");
+        registrationProgramme?.setCustomValidity(message);
+        event.preventDefault();
+        registrationProgramme.reportValidity();
+      }
+    });
+  }
 
   const uploadProgramme = document.getElementById("upload-programme");
   const uploadSemester = document.getElementById("upload-semester");
-  const uploadSubject = document.getElementById("upload-subject");
   if (uploadProgramme && uploadProgramme.value) {
     const selectedSemester = uploadSemester.value;
-    const selectedSubject = uploadSubject.value;
-    loadSemesters(uploadProgramme.value, uploadSemester, selectedSemester)
-      .then(() => loadSubjects(uploadProgramme.value, uploadSemester.value, uploadSubject, selectedSubject)).catch(() => {});
+    loadSemesters(uploadProgramme.value, uploadSemester, selectedSemester, "Choose a semester").catch(() => {});
   }
-  uploadProgramme?.addEventListener("change", async () => {
-    await loadSemesters(uploadProgramme.value, uploadSemester);
-    await loadSubjects(uploadProgramme.value, "", uploadSubject);
-  });
-  uploadSemester?.addEventListener("change", () => loadSubjects(uploadProgramme.value, uploadSemester.value, uploadSubject));
+  uploadProgramme?.addEventListener("change", () => loadSemesters(uploadProgramme.value, uploadSemester, "", "Choose a semester"));
 
   const resourceType = document.getElementById("resource-type");
   const examFields = document.getElementById("exam-fields");

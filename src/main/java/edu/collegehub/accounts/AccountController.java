@@ -39,7 +39,7 @@ public class AccountController {
     @GetMapping("/register")
     public String register(Model model) {
         model.addAttribute("registrationForm", new RegistrationForm());
-        model.addAttribute("programmes", catalogue.programmes());
+        model.addAttribute("programmes", catalogue.programmesWithSemesters());
         return "register";
     }
 
@@ -53,17 +53,36 @@ public class AccountController {
         Programme programme = null;
         Semester semester = null;
         if (registrationForm.getProgrammeId() != null && registrationForm.getSemesterId() != null) {
-            try {
-                programme = catalogue.requireProgramme(registrationForm.getProgrammeId());
-                semester = catalogue.requireSemester(programme.getId(), registrationForm.getSemesterId());
-            } catch (IllegalArgumentException ex) {
-                bindingResult.reject("catalogue", ex.getMessage());
+            programme = catalogue.activeProgramme(registrationForm.getProgrammeId());
+            if (programme == null) {
+                bindingResult.rejectValue("programmeId", "invalid", "Choose a valid programme.");
+            } else {
+                semester = catalogue.semesterInProgramme(registrationForm.getSemesterId(), programme.getId());
+                if (semester == null) {
+                    bindingResult.rejectValue("semesterId", "invalid",
+                            "Choose a semester belonging to the selected programme.");
+                }
             }
-        } else if (registrationForm.getProgrammeId() != null || registrationForm.getSemesterId() != null) {
-            bindingResult.reject("catalogue", "Choose both a programme and a semester, or leave both blank.");
+        } else if (registrationForm.getProgrammeId() != null) {
+            bindingResult.rejectValue("semesterId", "requiredForProgramme",
+                    "Choose a current semester for this programme, or clear the programme.");
+        } else if (registrationForm.getSemesterId() != null) {
+            bindingResult.rejectValue("programmeId", "requiredForSemester",
+                    "Choose the programme that this semester belongs to.");
         }
         if (bindingResult.hasErrors()) {
-            model.addAttribute("programmes", catalogue.programmes());
+            model.addAttribute("programmes", catalogue.programmesWithSemesters());
+            Long programmeId = registrationForm.getProgrammeId();
+            java.util.List<CatalogueService.SemesterOption> semesterOptions = programmeId == null
+                    ? java.util.List.of() : catalogue.semesterOptions(programmeId);
+            if (programmeId == null && registrationForm.getSemesterId() != null) {
+                Semester submittedSemester = catalogue.semester(registrationForm.getSemesterId());
+                if (submittedSemester != null) {
+                    semesterOptions = java.util.List.of(new CatalogueService.SemesterOption(submittedSemester.getId(),
+                            submittedSemester.getNumber(), submittedSemester.getLabel()));
+                }
+            }
+            model.addAttribute("semesters", semesterOptions);
             return "register";
         }
         AppUser user = new AppUser(registrationForm.getEmail(), passwordEncoder.encode(registrationForm.getPassword()),

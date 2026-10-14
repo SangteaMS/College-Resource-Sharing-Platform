@@ -21,6 +21,11 @@ public class Programme {
     private boolean active = true;
 
     protected Programme() { }
+    public Programme(String code, String name, String description) {
+        this.code = code;
+        this.name = name;
+        this.description = description;
+    }
     public Long getId() { return id; }
     public String getCode() { return code; }
     public String getName() { return name; }

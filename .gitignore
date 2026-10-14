@@ -2,6 +2,9 @@
 /.m2/
 /data/
 /uploads/
+/.env
+/.env.*
+!/.env.example
 /.idea/
 *.iml
 .DS_Store

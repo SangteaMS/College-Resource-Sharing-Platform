@@ -1,14 +1,30 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Create account | College Hub</title><link rel="stylesheet" th:href="@{/css/styles.css}"></head>
-<body><header th:replace="~{fragments/layout :: siteHeader}"></header><main class="auth-page"><p class="eyebrow">JOIN THE STUDY SHELF</p><h1 class="page-title">Create your account<span>.</span></h1><p class="page-intro">Choose your programme and current semester so browsing can start with resources relevant to you. You can still view other courses.</p>
+<body><header th:replace="~{fragments/layout :: siteHeader}"></header><main class="auth-page"><p class="eyebrow">JOIN THE STUDY SHELF</p><h1 class="page-title">Create your account<span>.</span></h1><p class="page-intro">Add your programme and current semester to personalize browsing, or leave both blank and choose them later.</p>
     <form class="form-card" th:action="@{/register}" th:object="${registrationForm}" method="post">
         <div class="notice notice-error" th:if="${#fields.hasGlobalErrors()}"><p th:each="error : ${#fields.globalErrors()}" th:text="${error}">Please check your details.</p></div>
         <label>Full name<input type="text" th:field="*{fullName}" autocomplete="name" maxlength="120" required><span class="field-error" th:errors="*{fullName}"></span></label>
         <label>Email address<input type="email" th:field="*{email}" autocomplete="email" maxlength="190" required><span class="field-error" th:errors="*{email}"></span></label>
         <label>Password <small>At least 8 characters</small><input type="password" th:field="*{password}" autocomplete="new-password" minlength="8" maxlength="72" required><span class="field-error" th:errors="*{password}"></span></label>
-        <div class="form-row"><label>Preferred programme<select th:field="*{programmeId}" id="registration-programme"><option value="">Choose programme</option><option th:each="option : ${programmes}" th:value="${option.id}" th:text="${option.name}"></option></select><span class="field-error" th:errors="*{programmeId}"></span></label>
-            <label>Current semester<select th:field="*{semesterId}" id="registration-semester" data-semesters="true"><option value="">Choose semester</option><option th:each="option : ${semesters}" th:value="${option.id}" th:text="${option.label}"></option></select><span class="field-error" th:errors="*{semesterId}"></span></label></div>
+        <div class="form-row academic-details">
+            <label for="registration-programme">Preferred programme <span class="optional-label">Optional</span>
+                <select th:field="*{programmeId}" id="registration-programme" aria-describedby="registration-programme-help registration-programme-error" th:attr="aria-invalid=${#fields.hasErrors('programmeId')}">
+                    <option value="">Choose programme (optional)</option>
+                    <option th:each="option : ${programmes}" th:value="${option.id}" th:text="${option.name}"></option>
+                </select>
+                <small id="registration-programme-help" class="form-help">Choose a programme only if you also choose a semester.</small>
+                <span class="field-error" id="registration-programme-error" role="alert" th:errors="*{programmeId}"></span>
+            </label>
+            <label for="registration-semester">Current semester <span class="optional-label">Optional</span>
+                <select th:field="*{semesterId}" id="registration-semester" aria-describedby="registration-semester-help registration-semester-error" th:attr="aria-invalid=${#fields.hasErrors('semesterId')}" th:disabled="${registrationForm.programmeId == null and registrationForm.semesterId == null}">
+                    <option value="" th:text="${registrationForm.programmeId == null ? 'Choose a programme first' : 'Choose semester (optional)'}">Choose a programme first</option>
+                    <option th:each="option : ${semesters}" th:value="${option.id}" th:text="${option.label}"></option>
+                </select>
+                <small id="registration-semester-help" class="form-help" aria-live="polite">Select a programme to load its available semesters.</small>
+                <span class="field-error" id="registration-semester-error" role="alert" th:errors="*{semesterId}"></span>
+            </label>
+        </div>
         <button class="button" type="submit">Create student account</button>
         <p class="form-help">Already registered? <a th:href="@{/login}">Sign in</a></p>
     </form>

@@ -2,6 +2,7 @@ package edu.collegehub.resources;
 
 import java.util.List;
 
+import edu.collegehub.accounts.AccountRole;
 import edu.collegehub.accounts.AppUser;
 import edu.collegehub.accounts.AppUserRepository;
 import edu.collegehub.catalog.CatalogueService;
@@ -12,6 +13,7 @@ import edu.collegehub.usage.UsageEvent;
 import edu.collegehub.usage.UsageEventRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -32,12 +34,12 @@ public class ResourceService {
     @Transactional(readOnly = true)
     public Page<Resource> search(Long programmeId, Long semesterId, Long subjectId, ResourceType type,
                                  Integer examYear, ExamType examType, String query, boolean papersOnly, Pageable page) {
-        return resources.searchApproved(programmeId, semesterId, subjectId, type, examYear, examType,
-                query == null || query.isBlank() ? null : query.trim(), papersOnly, page);
+        return resources.findAll(ResourceSearch.approved(programmeId, semesterId, subjectId, type,
+                examYear, examType, query, papersOnly), page);
     }
     @Transactional(readOnly = true)
     public Resource publicResource(Long id) {
-        return resources.findByIdAndStatusAndRemovedFalse(id, ModerationStatus.APPROVED)
+        return resources.findByIdAndStatusAndRemovedFalseAndDemoResourceFalse(id, ModerationStatus.APPROVED)
                 .orElseThrow(() -> new ResourceNotFoundException());
     }
     @Transactional(readOnly = true)
@@ -89,7 +91,7 @@ public class ResourceService {
     @Transactional(readOnly = true)
     public List<Resource> myResources(Long userId) {
         AppUser user = users.findById(userId).orElseThrow();
-        return resources.findByUploadedByAndRemovedFalseOrderByUploadedAtDesc(user);
+        return resources.findByUploadedByOrderByUploadedAtDesc(user);
     }
     @Transactional(readOnly = true)
     public Resource ownedResource(Long resourceId, Long userId) {
@@ -113,6 +115,22 @@ public class ResourceService {
         storage.deleteAfterCommit(storage.pathFor(resource.getStoredFilename()));
     }
 
+    @Transactional
+    public void removeByAdmin(Long id, String reason, AppUser principal) {
+        String normalizedReason = reason == null ? "" : reason.trim();
+        if (normalizedReason.length() < 3 || normalizedReason.length() > 500) {
+            throw new IllegalArgumentException("Enter a removal reason between 3 and 500 characters.");
+        }
+        if (principal == null || principal.getRole() != AccountRole.ADMIN) {
+            throw new AccessDeniedException("Only an administrator can remove a resource.");
+        }
+        Resource resource = resources.findById(id).filter(r -> !r.isRemoved())
+                .orElseThrow(ResourceNotFoundException::new);
+        AppUser admin = users.findById(principal.getId()).orElseThrow();
+        resource.markRemovedByAdmin(admin, normalizedReason);
+        storage.deleteAfterCommit(storage.pathFor(resource.getStoredFilename()));
+    }
+
     @Transactional(readOnly = true)
     public List<Resource> pendingResources() {
         return resources.findByStatusAndRemovedFalseOrderByUploadedAtAsc(ModerationStatus.PENDING);
@@ -128,13 +146,14 @@ public class ResourceService {
 
     @Transactional
     public void reject(Long id, String reason, AppUser principal) {
-        if (reason == null || reason.isBlank() || reason.trim().length() > 500) {
-            throw new IllegalArgumentException("Add a rejection reason of up to 500 characters.");
+        String normalizedReason = reason == null ? "" : reason.trim();
+        if (normalizedReason.length() < 3 || normalizedReason.length() > 500) {
+            throw new IllegalArgumentException("Enter a rejection reason between 3 and 500 characters.");
         }
         Resource resource = resources.findById(id).filter(r -> !r.isRemoved() && r.getStatus() == ModerationStatus.PENDING)
                 .orElseThrow(ResourceNotFoundException::new);
         AppUser admin = users.findById(principal.getId()).orElseThrow();
-        resource.reject(admin, reason.trim());
+        resource.reject(admin, normalizedReason);
     }
 
     @Transactional
@@ -146,41 +165,10 @@ public class ResourceService {
         return new DownloadedResource(resource.getStoredFilename(), resource.getDisplayFilename(), resource.getFileFormat());
     }
 
-    @Transactional
-    public Resource createDemo(Programme programme, Semester semester, Subject subject, ResourceType type,
-                               Integer year, ExamType examType, String session, String title, String description,
-                               String sampleText) {
-        UploadStorageService.StoredUpload file = storage.storePdf(title.replaceAll("[^A-Za-z0-9-]", "-"), sampleText);
-        Resource resource = new Resource();
-        resource.setDetails(title, description, programme, semester, subject, type, FileFormat.PDF,
-                file.displayFilename(), file.storedFilename(), file.size(), year, examType, session);
-        resource.setDemoResource(true);
-        resource.approve(null);
-        resources.save(resource);
-        return resource;
-    }
-
-    @Transactional
-    public Resource createDemoScript(Programme programme, Semester semester, Subject subject,
-                                     String title, String scriptText) {
-        UploadStorageService.StoredUpload file = storage.storeDemoScript(title.replaceAll("[^A-Za-z0-9-]", "-"), scriptText);
-        Resource resource = new Resource();
-        resource.setDetails(title, "Fictional example retained from the earlier project demo. It is a Practice Material resource with an R script file.",
-                programme, semester, subject, ResourceType.PRACTICE_MATERIAL, FileFormat.R_SCRIPT,
-                file.displayFilename(), file.storedFilename(), file.size(), null, null, null);
-        resource.setDemoResource(true);
-        resource.approve(null);
-        resources.save(resource);
-        return resource;
-    }
-
-    @Transactional(readOnly = true)
-    public boolean hasDemoResources() { return resources.existsByDemoResourceTrueAndRemovedFalse(); }
-
     private Selected select(UploadForm form) {
         Programme programme = catalogue.requireProgramme(form.getProgrammeId());
         Semester semester = catalogue.requireSemester(programme.getId(), form.getSemesterId());
-        Subject subject = catalogue.requireSubject(programme.getId(), semester.getId(), form.getSubjectId());
+        Subject subject = catalogue.resolveSubjectName(programme, semester, form.getSubjectName());
         return new Selected(programme, semester, subject);
     }
     private void validateExam(UploadForm form) {

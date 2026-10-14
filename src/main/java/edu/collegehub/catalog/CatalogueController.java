@@ -6,6 +6,7 @@ import java.util.Map;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -26,5 +27,12 @@ public class CatalogueController {
     public List<Map<String, Object>> subjectsInSemester(@PathVariable Long semesterId) {
         return catalogue.subjectOptionsForSemester(semesterId).stream()
                 .map(subject -> Map.<String, Object>of("id", subject.id(), "name", subject.name(), "code", subject.code(), "semesterId", subject.semesterId())).toList();
+    }
+    @GetMapping("/subjects/suggestions")
+    public List<CatalogueService.SubjectSuggestion> subjectSuggestions(
+            @RequestParam(defaultValue = "") String q,
+            @RequestParam(required = false) Long programmeId,
+            @RequestParam(required = false) Long semesterId) {
+        return catalogue.subjectSuggestions(q, programmeId, semesterId);
     }
 }

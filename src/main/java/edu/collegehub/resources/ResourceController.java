@@ -102,10 +102,10 @@ public class ResourceController {
         model.addAttribute("resources", result.getContent());
         model.addAttribute("programmes", catalogue.programmes());
         model.addAttribute("semesters", catalogue.semesterOptions(programmeId));
-        model.addAttribute("subjects", catalogue.subjectOptions(programmeId, semesterId));
         model.addAttribute("selectedProgrammeName", catalogue.programmes().stream().filter(p -> p.getId().equals(programmeId)).map(p -> p.getName()).findFirst().orElse(""));
         model.addAttribute("selectedSemesterLabel", catalogue.semesterOptions(programmeId).stream().filter(s -> s.id().equals(semesterId)).map(s -> s.label()).findFirst().orElse(""));
-        model.addAttribute("selectedSubjectName", catalogue.subjectOptions(programmeId, semesterId).stream().filter(s -> s.id().equals(subjectId)).map(s -> s.name()).findFirst().orElse(""));
+        var selectedSubject = catalogue.subject(subjectId);
+        model.addAttribute("selectedSubjectName", selectedSubject == null ? "" : selectedSubject.getName());
         model.addAttribute("paperYears", resourceService.approvedQuestionPaperYears());
         model.addAttribute("q", q);
         model.addAttribute("programmeId", programmeId);
@@ -121,9 +121,8 @@ public class ResourceController {
         model.addAttribute("browsePath", papersOnly ? "/question-papers" : "/resources");
         var requestUri = ServletUriComponentsBuilder.fromCurrentRequest().build();
         model.addAttribute("returnTo", requestUri.getPath() + (requestUri.getQuery() == null ? "" : "?" + requestUri.getQuery()));
-        model.addAttribute("resourceTypes", List.of(ResourceType.NOTES, ResourceType.QUESTION_PAPER, ResourceType.PRESENTATION,
-                ResourceType.STUDY_GUIDE, ResourceType.PRACTICE_MATERIAL, ResourceType.LAB_PRACTICAL_MATERIAL));
-        model.addAttribute("examTypes", List.of(ExamType.MID_TERM, ExamType.END_TERM, ExamType.OTHER));
+        model.addAttribute("resourceTypes", List.of(ResourceType.values()));
+        model.addAttribute("examTypes", List.of(ExamType.values()));
         model.addAttribute("maxUploadSize", maxUploadSize);
         return "resources";
     }

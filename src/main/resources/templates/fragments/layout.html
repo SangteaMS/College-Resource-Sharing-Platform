@@ -8,7 +8,7 @@
     </button>
     <nav class="primary-nav" id="main-navigation" aria-label="Main navigation">
         <a class="nav-link" th:href="@{/resources}" th:classappend="${#strings.startsWith(currentPath, '/resources') ? ' active' : ''}" th:attr="aria-current=${#strings.startsWith(currentPath, '/resources') ? 'page' : null}">Browse resources</a>
-        <a class="nav-link" th:href="@{/question-papers}" th:classappend="${currentPath == '/question-papers' ? ' active' : ''}" th:attr="aria-current=${currentPath == '/question-papers' ? 'page' : null}">Question papers</a>
+        <a class="nav-link" th:href="@{/question-papers(allCourses=true)}" th:classappend="${currentPath == '/question-papers' ? ' active' : ''}" th:attr="aria-current=${currentPath == '/question-papers' ? 'page' : null}">Past papers</a>
         <a class="nav-link" th:if="${currentUser != null}" th:href="@{/my-uploads}" th:classappend="${#strings.startsWith(currentPath, '/my-uploads') ? ' active' : ''}" th:attr="aria-current=${#strings.startsWith(currentPath, '/my-uploads') ? 'page' : null}">My uploads</a>
         <a class="nav-link" th:if="${isAdmin}" th:href="@{/admin/uploads}" th:classappend="${#strings.startsWith(currentPath, '/admin') ? ' active' : ''}">Review queue</a>
         <a class="button button-small upload-nav" th:href="${currentUser != null ? '/uploads/new' : '/login?next=/uploads/new'}">Upload resource</a>
@@ -21,11 +21,13 @@
         <a class="nav-link" th:if="${currentUser == null}" th:href="@{/register}" th:classappend="${currentPath == '/register' ? ' active' : ''}">Register</a>
     </nav>
 </header>
-<footer class="site-footer" th:fragment="siteFooter">
+<th:block th:fragment="siteFooter">
+<footer class="site-footer">
     <a class="brand" th:href="@{/}"><span class="brand-mark" aria-hidden="true">C</span><span>College<span class="brand-light">Hub</span></span></a>
     <span>Illustrative student resource library</span>
     <span>Learn · Share · Grow</span>
 </footer>
-<script th:src="@{/js/catalogue.js}"></script>
+<script th:src="@{/js/catalogue.js}" defer></script>
+</th:block>
 </body>
 </html>

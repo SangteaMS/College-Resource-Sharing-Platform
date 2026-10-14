@@ -4,12 +4,18 @@
 <body><header th:replace="~{fragments/layout :: siteHeader}"></header><main class="catalogue">
     <p class="eyebrow">ADMIN AREA</p><div class="section-heading"><div><h1 class="page-title">Review queue<span>.</span></h1><p class="page-intro">Approve suitable submissions or reject them with a useful reason. Approved papers are student-contributed and are not represented as official or faculty-verified.</p></div><a class="outline-button" th:href="@{/usage/export.csv}">Download usage CSV ↓</a></div>
     <div class="notice notice-success" th:if="${moderationMessage}" th:text="${moderationMessage}"></div>
+    <div class="notice notice-error" role="alert" th:if="${moderationError}" th:text="${moderationError}"></div>
     <section class="resource-list" aria-label="Pending submissions">
         <article class="manage-card" th:each="item : ${pendingResources}">
             <div class="manage-heading"><div><p class="resource-meta"><span th:text="${item.programme.name}">Course</span> · <span th:text="${item.semester.label}">Semester</span> · <span th:text="${item.subject.code + ' · ' + item.subject.name}">Subject</span> · <span th:text="${item.resourceType.label}">Type</span></p><h2 th:text="${item.title}">Resource title</h2></div><span class="status-badge status-pending">PENDING</span></div>
             <p class="resource-description" th:text="${item.description}">Description</p><p class="resource-meta">Submitted by <strong th:text="${item.uploadedBy.fullName}">Student</strong> · <span th:text="${#temporals.format(item.uploadedAt, 'd MMM yyyy HH:mm')}">Date</span> · <span th:text="${item.displayFilename}">File</span></p>
             <p class="resource-meta question-meta" th:if="${item.resourceType.name() == 'QUESTION_PAPER'}"><strong th:text="${item.examYear + ' · ' + item.examType.label}">Year · type</strong><span th:if="${item.examSession != null}" th:text="${' · ' + item.examSession}"></span></p>
             <div class="moderation-actions"><a class="outline-button" th:href="@{/admin/uploads/{id}/file(id=${item.id})}">Review file ↗</a><form th:action="@{/admin/uploads/{id}/approve(id=${item.id})}" method="post"><button class="button" type="submit">Approve</button></form><form class="reject-form" th:action="@{/admin/uploads/{id}/reject(id=${item.id})}" method="post"><label>Reason for rejection<input type="text" name="reason" required minlength="3" maxlength="500" placeholder="Explain what needs to change"></label><button class="outline-button danger" type="submit">Reject</button></form></div>
+            <form class="admin-removal-form" th:action="@{/admin/uploads/{id}/remove(id=${item.id})}" method="post"
+                  onsubmit="return confirm('Remove this resource from the platform? Its file will be deleted and the review record retained.');">
+                <label>Reason for removal<input type="text" name="reason" required minlength="3" maxlength="500" placeholder="Explain why this resource should be removed"></label>
+                <button class="outline-button danger" type="submit">Remove from platform</button>
+            </form>
         </article>
         <div class="empty-state" th:if="${pendingResources.isEmpty()}"><h2>Queue is clear</h2><p>There are no pending student submissions to review.</p></div>
     </section>

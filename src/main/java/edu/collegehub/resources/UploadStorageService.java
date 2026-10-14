@@ -7,7 +7,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
@@ -58,23 +57,6 @@ public class UploadStorageService {
         } catch (IOException ex) {
             throw new IllegalStateException("The file could not be saved. Please try again.", ex);
         }
-    }
-
-    public StoredUpload storePdf(String name, String content) {
-        byte[] bytes = makeSimplePdf(content);
-        return store(new ValidatedUpload(sanitizeFilename(name + ".pdf"), FileFormat.PDF, bytes));
-    }
-    public StoredUpload storeDemoScript(String name, String content) {
-        String safeName = sanitizeFilename(name + ".R");
-        byte[] bytes = content.getBytes(StandardCharsets.UTF_8);
-        String generated = UUID.randomUUID() + ".r";
-        Path target = safePath(generated);
-        try {
-            Files.createDirectories(root);
-            Files.write(target, bytes);
-            cleanupIfTransactionRollsBack(target);
-            return new StoredUpload(generated, safeName, FileFormat.R_SCRIPT, bytes.length, target);
-        } catch (IOException ex) { throw new IllegalStateException("The sample script could not be saved.", ex); }
     }
 
     public Path pathFor(String storedFilename) {
@@ -156,51 +138,6 @@ public class UploadStorageService {
             while ((entry = zip.getNextEntry()) != null) entries.add(entry.getName());
             return entries.contains("[Content_Types].xml") && entries.contains(requiredFile);
         } catch (IOException ex) { return false; }
-    }
-
-    private byte[] makeSimplePdf(String text) {
-        String printable = text.replace("\r", "").replaceAll("[^\\x20-\\x7E\\n\\t]", " ");
-        ArrayList<String> lines = new ArrayList<>();
-        for (String paragraph : printable.split("\\n")) {
-            StringBuilder line = new StringBuilder();
-            for (String word : paragraph.trim().split("\\s+")) {
-                if (word.isBlank()) continue;
-                if (!line.isEmpty() && line.length() + word.length() + 1 > 82) {
-                    lines.add(line.toString());
-                    line.setLength(0);
-                }
-                if (!line.isEmpty()) line.append(' ');
-                line.append(word);
-            }
-            if (!line.isEmpty()) lines.add(line.toString());
-            else lines.add("");
-        }
-        StringBuilder streamContent = new StringBuilder("BT /F1 11 Tf 54 740 Td ");
-        for (int i = 0; i < Math.min(lines.size(), 42); i++) {
-            if (i > 0) streamContent.append("0 -16 Td ");
-            String safeLine = lines.get(i).replace("\\", "\\\\").replace("(", "\\(").replace(")", "\\)");
-            streamContent.append('(').append(safeLine).append(") Tj ");
-        }
-        streamContent.append("ET");
-        String stream = streamContent.toString();
-        String[] objects = {
-                "<< /Type /Catalog /Pages 2 0 R >>",
-                "<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
-                "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>",
-                "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
-                "<< /Length " + stream.getBytes(StandardCharsets.US_ASCII).length + " >>\nstream\n" + stream + "\nendstream"
-        };
-        StringBuilder pdf = new StringBuilder("%PDF-1.4\n");
-        int[] offsets = new int[objects.length + 1];
-        for (int i = 0; i < objects.length; i++) {
-            offsets[i + 1] = pdf.toString().getBytes(StandardCharsets.US_ASCII).length;
-            pdf.append(i + 1).append(" 0 obj\n").append(objects[i]).append("\nendobj\n");
-        }
-        int xref = pdf.toString().getBytes(StandardCharsets.US_ASCII).length;
-        pdf.append("xref\n0 ").append(objects.length + 1).append("\n0000000000 65535 f \n");
-        for (int i = 1; i < offsets.length; i++) pdf.append(String.format("%010d 00000 n \n", offsets[i]));
-        pdf.append("trailer\n<< /Size ").append(objects.length + 1).append(" /Root 1 0 R >>\nstartxref\n").append(xref).append("\n%%EOF");
-        return pdf.toString().getBytes(StandardCharsets.US_ASCII);
     }
 
     public record ValidatedUpload(String displayFilename, FileFormat format, byte[] bytes) { }

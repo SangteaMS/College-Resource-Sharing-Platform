@@ -1,20 +1,31 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title th:text="${resource.title + ' | College Hub'}">Resource | College Hub</title><link rel="stylesheet" th:href="@{/css/styles.css}"></head>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title th:text="${(#strings.startsWith(resource.title, 'Demo: ') ? #strings.substring(resource.title, 6) : resource.title) + ' | College Hub'}">Resource | College Hub</title><link rel="stylesheet" th:href="@{/css/styles.css}"></head>
 <body>
 <header th:replace="~{fragments/layout :: siteHeader}"></header>
 <main class="detail-page">
     <a class="back-link" th:href="${backUrl}">← Back to results</a>
     <p class="eyebrow">RESOURCE DETAILS</p>
-    <h1 class="page-title detail-title" th:text="${resource.title}">Resource title</h1>
+    <h1 class="page-title detail-title" th:text="${#strings.startsWith(resource.title, 'Demo: ') ? #strings.substring(resource.title, 6) : resource.title}">Resource title</h1>
     <div class="detail-tags"><span th:text="${resource.programme.name}">Programme</span><span th:text="${resource.semester.label}">Semester</span><span th:text="${resource.subject.code + ' · ' + resource.subject.name}">Subject</span><span class="type-badge" th:attr="data-type=${resource.resourceType.name()}" th:text="${resource.resourceType.label}">Notes</span><span th:text="${resource.fileFormat.extension.toUpperCase()}">PDF</span></div>
-    <div class="exam-detail" th:if="${resource.resourceType.name() == 'QUESTION_PAPER'}"><strong th:text="${resource.examYear + ' · ' + resource.examType.label}">2025 · Mid-term</strong><span th:if="${resource.examSession != null}" th:text="${' · ' + resource.examSession}"></span><p th:if="${resource.demoResource}" class="demo-label">Fictional project sample · not an official paper</p><p th:unless="${resource.demoResource}" class="contributed-label">Student-contributed · approved for sharing, not faculty-verified</p></div>
-    <p class="detail-description" th:if="${resource.description != null}" th:text="${resource.description}">Description</p>
+    <div class="exam-detail" th:if="${resource.resourceType.name() == 'QUESTION_PAPER'}"><strong th:text="${resource.examYear + ' · ' + resource.examType.label}">2025 · Mid-term</strong><span th:if="${resource.examSession != null}" th:text="${' · ' + resource.examSession}"></span><p class="contributed-label">Student-contributed · approved for sharing, not faculty-verified</p></div>
+    <p class="detail-description" th:if="${resource.description != null and not #strings.startsWith(resource.title, 'Demo: ')}" th:text="${resource.description}">Description</p>
     <section class="file-information" aria-labelledby="file-information-title"><p class="eyebrow" id="file-information-title">FILE INFORMATION</p><p class="file-name" th:text="${resource.displayFilename}">filename.pdf</p>
         <dl><div><dt>Format</dt><dd th:text="${resource.fileFormat.extension.toUpperCase()}">PDF</dd></div><div><dt>File size</dt><dd th:text="${#numbers.formatDecimal(resource.fileSizeBytes / 1024.0, 1, 1) + ' KB'}">File size</dd></div><div><dt>Uploaded</dt><dd><time th:datetime="${resource.uploadedAt}" th:text="${#temporals.format(resource.uploadedAt, 'd MMM yyyy')}">date</time></dd></div></dl>
-        <p class="demo-label" th:if="${resource.demoResource}">Fictional project sample</p></section>
+    </section>
     <a class="button download-button" th:href="@{/resources/{id}/download(id=${resource.id})}">Download resource <span aria-hidden="true">↓</span></a>
     <p class="download-help">Download the file to view it. In-browser previews are not available for every format.</p>
+    <section class="admin-removal-panel" th:if="${isAdmin}" aria-labelledby="admin-removal-heading">
+        <h2 id="admin-removal-heading">Admin action</h2>
+        <p>Removing this resource hides it from search and disables its download. Its review record remains available to the uploader.</p>
+        <form class="admin-removal-form" th:action="@{/admin/uploads/{id}/remove(id=${resource.id})}" method="post"
+              onsubmit="return confirm('Remove this resource from public access? The uploaded file will be deleted.');">
+            <label for="removal-reason">Reason for removal</label>
+            <textarea id="removal-reason" name="reason" required minlength="3" maxlength="500" rows="3"
+                      placeholder="Explain why this resource should be removed"></textarea>
+            <button class="outline-button danger" type="submit">Remove from platform</button>
+        </form>
+    </section>
 </main>
 <footer th:replace="~{fragments/layout :: siteFooter}"></footer>
 </body>
