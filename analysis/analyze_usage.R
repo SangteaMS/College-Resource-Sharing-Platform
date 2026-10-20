@@ -1,4 +1,4 @@
-# CollegeHub usage analysis (base R only).
+# ShareMats usage analysis (base R only).
 # Run: Rscript analysis/analyze_usage.R path/to/collegehub-usage.csv [output-folder]
 # The exported CSV contains programme and resource usage fields, never student names.
 

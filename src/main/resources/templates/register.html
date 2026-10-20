@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Create account | College Hub</title><link rel="stylesheet" th:href="@{/css/styles.css}"></head>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Create account | ShareMats</title><link rel="stylesheet" th:href="@{/css/styles.css}"></head>
 <body><header th:replace="~{fragments/layout :: siteHeader}"></header><main class="auth-page"><p class="eyebrow">JOIN THE STUDY SHELF</p><h1 class="page-title">Create your account<span>.</span></h1><p class="page-intro">Add your programme and current semester to personalize browsing, or leave both blank and choose them later.</p>
     <form class="form-card" th:action="@{/register}" th:object="${registrationForm}" method="post">
         <div class="notice notice-error" th:if="${#fields.hasGlobalErrors()}"><p th:each="error : ${#fields.globalErrors()}" th:text="${error}">Please check your details.</p></div>

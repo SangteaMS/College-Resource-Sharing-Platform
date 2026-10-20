@@ -2,14 +2,14 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-    <title th:text="${editing ? 'Edit upload | CollegeHub' : 'Upload resource | CollegeHub'}">Upload resource | CollegeHub</title>
+    <title th:text="${editing ? 'Edit upload | ShareMats' : 'Upload resource | ShareMats'}">Upload resource | ShareMats</title>
     <link rel="stylesheet" th:href="@{/css/styles.css}">
 </head>
 <body th:attr="data-signed-in=${currentUser != null}">
 <header th:replace="~{fragments/layout :: siteHeader}"></header>
 <main class="upload-page">
     <a class="back-link" th:href="${editing ? '/my-uploads' : '/resources'}">← Cancel and go back</a>
-    <p class="eyebrow">CONTRIBUTE TO COLLEGEHUB</p>
+    <p class="eyebrow">CONTRIBUTE TO SHAREMATS</p>
     <h1 class="page-title" th:text="${editing ? 'Edit your resource.' : 'Upload a resource.'}">Upload a resource.</h1>
     <p class="page-intro">Your resource will appear after approval. Only approved materials are visible to other students.</p>
     <div class="notice notice-error" th:if="${tooLarge}" role="alert">The selected file exceeds the <span th:text="${maxUploadSize / 1048576}">20</span> MB upload limit. Your other text fields may not have reached the server; check them and choose the file again.</div>

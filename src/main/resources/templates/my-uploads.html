@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>My uploads | College Hub</title><link rel="stylesheet" th:href="@{/css/styles.css}"></head>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>My uploads | ShareMats</title><link rel="stylesheet" th:href="@{/css/styles.css}"></head>
 <body><header th:replace="~{fragments/layout :: siteHeader}"></header><main class="catalogue">
     <p class="eyebrow">YOUR CONTRIBUTIONS</p><div class="section-heading"><div><h1 class="page-title">My uploads<span>.</span></h1><p class="page-intro">Track review decisions and removal notes. Editing an approved item sends it back for review.</p></div><a class="button" th:href="@{/uploads/new}">Upload resource</a></div>
     <div class="notice notice-success" th:if="${uploadSuccess}">Your resource and file were saved. It is Pending and will appear publicly only after admin approval.</div><div class="notice notice-success" th:if="${updateSuccess}">Your changes were saved and sent for review.</div><div class="notice notice-success" th:if="${removed}">Your submission was removed.</div><div class="notice notice-error" th:if="${manageError}" th:text="${manageError}"></div>

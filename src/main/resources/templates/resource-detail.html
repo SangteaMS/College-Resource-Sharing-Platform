@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title th:text="${(#strings.startsWith(resource.title, 'Demo: ') ? #strings.substring(resource.title, 6) : resource.title) + ' | College Hub'}">Resource | College Hub</title><link rel="stylesheet" th:href="@{/css/styles.css}"></head>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title th:text="${(#strings.startsWith(resource.title, 'Demo: ') ? #strings.substring(resource.title, 6) : resource.title) + ' | ShareMats'}">Resource | ShareMats</title><link rel="stylesheet" th:href="@{/css/styles.css}"></head>
 <body>
 <header th:replace="~{fragments/layout :: siteHeader}"></header>
 <main class="detail-page">

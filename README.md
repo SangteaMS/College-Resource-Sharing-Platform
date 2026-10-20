@@ -1,6 +1,6 @@
-# CollegeHub — College Resource Sharing System
+# ShareMats — College Resource Sharing System
 
-CollegeHub is a semester integrated project built with Java, Spring Boot, Spring MVC, Thymeleaf, MySQL, and optional R analysis. It lets students browse and contribute academic resources, with an admin review step before a student upload becomes public.
+ShareMats is a semester integrated project built with Java, Spring Boot, Spring MVC, Thymeleaf, MySQL, and optional R analysis. It lets students browse and contribute academic resources, with an admin review step before a student upload becomes public.
 
 The programme and subject names are illustrative demo categories. They are not verified official curricula, and fictional papers are not official exams or faculty-verified documents.
 
@@ -67,7 +67,7 @@ The default profile connects to MySQL. Create a database (or allow the configure
 $env:DB_URL = 'jdbc:mysql://localhost:3306/collegehub?createDatabaseIfNotExist=true&serverTimezone=UTC'
 $env:DB_USERNAME = 'your-mysql-user'
 $env:DB_PASSWORD = 'your-mysql-password'
-$env:COLLEGEHUB_STORAGE_LOCATION = 'C:\CollegeHubFiles'
+$env:COLLEGEHUB_STORAGE_LOCATION = 'C:\ShareMatsFiles'
 $env:COLLEGEHUB_ADMIN_EMAIL = 'admin@your-college.example'
 $env:COLLEGEHUB_ADMIN_PASSWORD = 'use-a-long-private-password'
 .\mvnw.cmd spring-boot:run

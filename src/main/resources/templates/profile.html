@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>My profile | College Hub</title><link rel="stylesheet" th:href="@{/css/styles.css}"></head>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>My profile | ShareMats</title><link rel="stylesheet" th:href="@{/css/styles.css}"></head>
 <body th:attr="data-signed-in=${currentUser != null}"><header th:replace="~{fragments/layout :: siteHeader}"></header><main class="auth-page"><p class="eyebrow">YOUR BROWSING PREFERENCE</p><h1 class="page-title">My profile<span>.</span></h1><p class="page-intro">Your course preference helps us start your browsing in the right place. It does not limit which approved resources you can open.</p>
     <div class="notice notice-success" th:if="${saved}">Your preferences have been saved.</div><div class="notice notice-error" th:if="${error}" th:text="${error}"></div>
     <form class="form-card" th:action="@{/profile}" method="post">

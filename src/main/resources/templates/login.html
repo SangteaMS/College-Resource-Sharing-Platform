@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Sign in | College Hub</title><link rel="stylesheet" th:href="@{/css/styles.css}"></head>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Sign in | ShareMats</title><link rel="stylesheet" th:href="@{/css/styles.css}"></head>
 <body><header th:replace="~{fragments/layout :: siteHeader}"></header><main class="auth-page"><p class="eyebrow">WELCOME BACK</p><h1 class="page-title">Sign in<span>.</span></h1><p class="page-intro">Sign in to upload resources or manage your submissions. Browsing approved resources stays open to everyone.</p>
     <div class="notice notice-success" th:if="${accountCreated}">Your student account is ready. Sign in to add your first resource.</div><div class="notice notice-success" th:if="${loggedOut}">You have signed out.</div><div class="notice notice-error" th:if="${loginError}">Email or password was not recognized.</div>
     <form class="form-card" th:action="@{/login}" method="post"><input type="hidden" name="next" th:value="${next}">

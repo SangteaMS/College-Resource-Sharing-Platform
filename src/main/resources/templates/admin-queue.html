@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Admin review queue | College Hub</title><link rel="stylesheet" th:href="@{/css/styles.css}"></head>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Admin review queue | ShareMats</title><link rel="stylesheet" th:href="@{/css/styles.css}"></head>
 <body><header th:replace="~{fragments/layout :: siteHeader}"></header><main class="catalogue">
     <p class="eyebrow">ADMIN AREA</p><div class="section-heading"><div><h1 class="page-title">Review queue<span>.</span></h1><p class="page-intro">Approve suitable submissions or reject them with a useful reason. Approved papers are student-contributed and are not represented as official or faculty-verified.</p></div><a class="outline-button" th:href="@{/usage/export.csv}">Download usage CSV ↓</a></div>
     <div class="notice notice-success" th:if="${moderationMessage}" th:text="${moderationMessage}"></div>

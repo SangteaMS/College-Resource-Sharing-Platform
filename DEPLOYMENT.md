@@ -1,4 +1,4 @@
-# Make CollegeHub available on the internet
+# Make ShareMats available on the internet
 
 This project needs a Java server, MySQL, and persistent file storage. GitHub Pages can host the static preview in `docs/`, but it cannot run Spring Boot, account login, moderation, or uploads.
 
