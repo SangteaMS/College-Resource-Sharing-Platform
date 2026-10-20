@@ -24,6 +24,7 @@ public interface ResourceRepository extends JpaRepository<Resource, Long>, JpaSp
     @EntityGraph(attributePaths = {"programme", "semester", "subject"})
     Optional<Resource> findByIdAndStatusAndRemovedFalseAndDemoResourceFalse(Long id, ModerationStatus status);
     boolean existsByTitle(String title);
+    Optional<Resource> findByTitleAndUploadedByIsNull(String title);
     @EntityGraph(attributePaths = {"programme", "semester", "subject"})
     Optional<Resource> findByIdAndUploadedBy_IdAndRemovedFalse(Long id, Long userId);
     @EntityGraph(attributePaths = {"programme", "semester", "subject"})

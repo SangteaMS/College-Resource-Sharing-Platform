@@ -79,9 +79,25 @@ public class LocalDemoCatalogueInitializer implements ApplicationRunner {
                     .filter(candidate -> candidate.getNumber() == spec.semesterNumber()).findFirst().orElseThrow();
             Subject subject = subjects.findByCode(spec.subjectCode()).orElseThrow();
             String filename = spec.title().toLowerCase().replaceAll("[^a-z0-9]+", "-").replaceAll("^-|-$", "") + ".pdf";
+            String oldTitle = spec.title().replaceFirst("^Sample: ", "Demo: ");
+            Resource resource = resources.findByTitleAndUploadedByIsNull(oldTitle).orElse(null);
+            if (resource != null) {
+                String oldStoredFilename = resource.getStoredFilename();
+                if (resource.isRemoved()) {
+                    resource.updateSampleContent(spec.title(), "Fictional sample material. Not an official college document.",
+                            FileFormat.PDF, resource.getDisplayFilename(), oldStoredFilename, resource.getFileSizeBytes());
+                } else {
+                    var stored = storage.store(new UploadStorageService.ValidatedUpload(filename, FileFormat.PDF, samplePdf));
+                    resource.updateSampleContent(spec.title(), "Fictional sample material. Not an official college document.",
+                            stored.format(), stored.displayFilename(), stored.storedFilename(), stored.size());
+                    if (oldStoredFilename != null) storage.deleteAfterCommit(storage.pathFor(oldStoredFilename));
+                }
+                resources.save(resource);
+                continue;
+            }
             var stored = storage.store(new UploadStorageService.ValidatedUpload(filename, FileFormat.PDF, samplePdf));
-            Resource resource = new Resource();
-            resource.setDetails(spec.title(), "Illustrative demo material. This is a fictional sample, not an official college or university document.",
+            resource = new Resource();
+            resource.setDetails(spec.title(), "Fictional sample material. Not an official college document.",
                     programme, semester, subject, spec.type(), stored.format(), stored.displayFilename(),
                     stored.storedFilename(), stored.size(), null, null, null);
             resource.setDemoResource(false);
@@ -145,38 +161,38 @@ public class LocalDemoCatalogueInitializer implements ApplicationRunner {
 
     private List<ResourceSpec> resources() {
         List<ResourceSpec> result = new ArrayList<>();
-        add(result, "BCA", 1, "BCA-JAVA-101", "Demo: Java Programming Quick Notes", ResourceType.NOTES);
-        add(result, "BCA", 1, "BCA-JAVA-101", "Demo: Java Objects and Classes Slides", ResourceType.PRESENTATION);
-        add(result, "BCA", 2, "BCA-DBMS-201", "Demo: Database Normalization Practice Paper", ResourceType.PRACTICE_MATERIAL);
-        add(result, "BCA", 3, "BCA-STAT-301", "Demo: Statistics with R Study Guide", ResourceType.STUDY_GUIDE);
-        add(result, "BCOM", 1, "BCOM-ACC-101", "Demo: Accounting Ledger Notes", ResourceType.NOTES);
-        add(result, "BCOM", 2, "BCOM-ECO-201", "Demo: Business Economics Assignment", ResourceType.ASSIGNMENT);
-        add(result, "BBA", 1, "BBA-MGMT-101", "Demo: Management Principles Study Material", ResourceType.STUDY_MATERIAL);
-        add(result, "BBA", 2, "BBA-MKT-201", "Demo: Marketing Mix Slides", ResourceType.PRESENTATION);
-        add(result, "BAPOL", 1, "BAPOL-POL-101", "Demo: Political Theory Reading Notes", ResourceType.NOTES);
-        add(result, "BAPOL", 2, "BAPOL-GOV-201", "Demo: Indian Government Revision Guide", ResourceType.STUDY_GUIDE);
-        add(result, "BSCBIO", 1, "BSCBIO-CELL-101", "Demo: Cell Biology Diagram Slides", ResourceType.PRESENTATION);
-        add(result, "BSCBIO", 2, "BSCBIO-GEN-201", "Demo: Genetics Practice Questions", ResourceType.PRACTICE_MATERIAL);
-        add(result, "BSCCS", 1, "BSCCS-PROG-101", "Demo: Programming Fundamentals Notes", ResourceType.NOTES);
-        add(result, "BSCCS", 2, "BSCCS-DSA-201", "Demo: Data Structures Assignment", ResourceType.ASSIGNMENT);
-        add(result, "BSCMATH", 1, "BSCMATH-CALC-101", "Demo: Calculus Worked Examples", ResourceType.STUDY_MATERIAL);
-        add(result, "BSCMATH", 2, "BSCMATH-LA-201", "Demo: Linear Algebra Practice Paper", ResourceType.PRACTICE_MATERIAL);
-        add(result, "BSCPHY", 1, "BSCPHY-MECH-101", "Demo: Classical Mechanics Study Guide", ResourceType.STUDY_GUIDE);
-        add(result, "BSCPHY", 2, "BSCPHY-OPT-201", "Demo: Waves and Optics Slides", ResourceType.PRESENTATION);
-        add(result, "BSCCHEM", 1, "BSCCHEM-GEN-101", "Demo: General Chemistry Notes", ResourceType.NOTES);
-        add(result, "BSCCHEM", 2, "BSCCHEM-ORG-201", "Demo: Organic Chemistry Lab Worksheet", ResourceType.LAB_PRACTICAL_MATERIAL);
-        add(result, "BSCDS", 1, "BSCDS-STAT-101", "Demo: Data Science Statistics Assignment", ResourceType.ASSIGNMENT);
-        add(result, "BSCDS", 2, "BSCDS-PY-201", "Demo: Python Data Analysis Practice", ResourceType.PRACTICE_MATERIAL);
-        add(result, "BSCZOO", 1, "BSCZOO-DIV-101", "Demo: Animal Diversity Study Material", ResourceType.STUDY_MATERIAL);
-        add(result, "BSCZOO", 2, "BSCZOO-PHY-201", "Demo: Animal Physiology Revision Notes", ResourceType.NOTES);
-        add(result, "BSCBOT", 1, "BSCBOT-DIV-101", "Demo: Plant Diversity Slides", ResourceType.PRESENTATION);
-        add(result, "BSCBOT", 2, "BSCBOT-PHY-201", "Demo: Plant Physiology Practice Questions", ResourceType.PRACTICE_MATERIAL);
-        add(result, "BAENG", 1, "BAENG-WRIT-101", "Demo: Academic Writing Study Guide", ResourceType.STUDY_GUIDE);
-        add(result, "BAENG", 2, "BAENG-LIT-201", "Demo: Introduction to Literature Notes", ResourceType.NOTES);
-        add(result, "BAPSY", 1, "BAPSY-INTRO-101", "Demo: Psychology Concepts Slides", ResourceType.PRESENTATION);
-        add(result, "BAECO", 1, "BAECO-MICRO-101", "Demo: Microeconomics Practice Paper", ResourceType.PRACTICE_MATERIAL);
-        add(result, "BAHIST", 2, "BAHIST-MOD-201", "Demo: Modern Indian History Assignment", ResourceType.ASSIGNMENT);
-        add(result, "BASOC", 2, "BASOC-RES-201", "Demo: Social Research Methods Notes", ResourceType.NOTES);
+        add(result, "BCA", 1, "BCA-JAVA-101", "Sample: Java Programming Quick Notes", ResourceType.NOTES);
+        add(result, "BCA", 1, "BCA-JAVA-101", "Sample: Java Objects and Classes Slides", ResourceType.PRESENTATION);
+        add(result, "BCA", 2, "BCA-DBMS-201", "Sample: Database Normalization Practice Paper", ResourceType.PRACTICE_MATERIAL);
+        add(result, "BCA", 3, "BCA-STAT-301", "Sample: Statistics with R Study Guide", ResourceType.STUDY_GUIDE);
+        add(result, "BCOM", 1, "BCOM-ACC-101", "Sample: Accounting Ledger Notes", ResourceType.NOTES);
+        add(result, "BCOM", 2, "BCOM-ECO-201", "Sample: Business Economics Assignment", ResourceType.ASSIGNMENT);
+        add(result, "BBA", 1, "BBA-MGMT-101", "Sample: Management Principles Study Material", ResourceType.STUDY_MATERIAL);
+        add(result, "BBA", 2, "BBA-MKT-201", "Sample: Marketing Mix Slides", ResourceType.PRESENTATION);
+        add(result, "BAPOL", 1, "BAPOL-POL-101", "Sample: Political Theory Reading Notes", ResourceType.NOTES);
+        add(result, "BAPOL", 2, "BAPOL-GOV-201", "Sample: Indian Government Revision Guide", ResourceType.STUDY_GUIDE);
+        add(result, "BSCBIO", 1, "BSCBIO-CELL-101", "Sample: Cell Biology Diagram Slides", ResourceType.PRESENTATION);
+        add(result, "BSCBIO", 2, "BSCBIO-GEN-201", "Sample: Genetics Practice Questions", ResourceType.PRACTICE_MATERIAL);
+        add(result, "BSCCS", 1, "BSCCS-PROG-101", "Sample: Programming Fundamentals Notes", ResourceType.NOTES);
+        add(result, "BSCCS", 2, "BSCCS-DSA-201", "Sample: Data Structures Assignment", ResourceType.ASSIGNMENT);
+        add(result, "BSCMATH", 1, "BSCMATH-CALC-101", "Sample: Calculus Worked Examples", ResourceType.STUDY_MATERIAL);
+        add(result, "BSCMATH", 2, "BSCMATH-LA-201", "Sample: Linear Algebra Practice Paper", ResourceType.PRACTICE_MATERIAL);
+        add(result, "BSCPHY", 1, "BSCPHY-MECH-101", "Sample: Classical Mechanics Study Guide", ResourceType.STUDY_GUIDE);
+        add(result, "BSCPHY", 2, "BSCPHY-OPT-201", "Sample: Waves and Optics Slides", ResourceType.PRESENTATION);
+        add(result, "BSCCHEM", 1, "BSCCHEM-GEN-101", "Sample: General Chemistry Notes", ResourceType.NOTES);
+        add(result, "BSCCHEM", 2, "BSCCHEM-ORG-201", "Sample: Organic Chemistry Lab Worksheet", ResourceType.LAB_PRACTICAL_MATERIAL);
+        add(result, "BSCDS", 1, "BSCDS-STAT-101", "Sample: Data Science Statistics Assignment", ResourceType.ASSIGNMENT);
+        add(result, "BSCDS", 2, "BSCDS-PY-201", "Sample: Python Data Analysis Practice", ResourceType.PRACTICE_MATERIAL);
+        add(result, "BSCZOO", 1, "BSCZOO-DIV-101", "Sample: Animal Diversity Study Material", ResourceType.STUDY_MATERIAL);
+        add(result, "BSCZOO", 2, "BSCZOO-PHY-201", "Sample: Animal Physiology Revision Notes", ResourceType.NOTES);
+        add(result, "BSCBOT", 1, "BSCBOT-DIV-101", "Sample: Plant Diversity Slides", ResourceType.PRESENTATION);
+        add(result, "BSCBOT", 2, "BSCBOT-PHY-201", "Sample: Plant Physiology Practice Questions", ResourceType.PRACTICE_MATERIAL);
+        add(result, "BAENG", 1, "BAENG-WRIT-101", "Sample: Academic Writing Study Guide", ResourceType.STUDY_GUIDE);
+        add(result, "BAENG", 2, "BAENG-LIT-201", "Sample: Introduction to Literature Notes", ResourceType.NOTES);
+        add(result, "BAPSY", 1, "BAPSY-INTRO-101", "Sample: Psychology Concepts Slides", ResourceType.PRESENTATION);
+        add(result, "BAECO", 1, "BAECO-MICRO-101", "Sample: Microeconomics Practice Paper", ResourceType.PRACTICE_MATERIAL);
+        add(result, "BAHIST", 2, "BAHIST-MOD-201", "Sample: Modern Indian History Assignment", ResourceType.ASSIGNMENT);
+        add(result, "BASOC", 2, "BASOC-RES-201", "Sample: Social Research Methods Notes", ResourceType.NOTES);
         return result;
     }
 
@@ -185,7 +201,7 @@ public class LocalDemoCatalogueInitializer implements ApplicationRunner {
     }
 
     private byte[] samplePdf() {
-        String content = "BT /F1 16 Tf 72 720 Td (Illustrative demo study resource.) Tj ET\n";
+        String content = "BT /F1 16 Tf 72 720 Td (Fictional sample material. Not an official college document.) Tj ET\n";
         String stream = "<< /Length " + content.getBytes(StandardCharsets.US_ASCII).length + " >>\nstream\n" + content + "endstream";
         List<String> objects = List.of(
                 "<< /Type /Catalog /Pages 2 0 R >>",

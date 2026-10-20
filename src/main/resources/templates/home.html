@@ -2,6 +2,7 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="application-name" content="ShareMats">
     <meta name="description" content="Browse, search, and share academic resources with ShareMats.">
     <title>ShareMats | Academic resources</title>
     <link rel="stylesheet" th:href="@{/css/styles.css}">
@@ -12,7 +13,7 @@
     <div class="notice notice-success" th:if="${param.loggedOut}">You are signed out. Approved resources are open to browse.</div>
     <section class="home-hero">
         <div class="home-intro">
-            <p class="eyebrow">COLLEGE RESOURCE SHARING</p>
+            <p class="eyebrow">SHAREMATS RESOURCE SHARING</p>
             <h1>Browse, search,<br><span>and share resources.</span></h1>
             <p class="home-lede">Find notes, presentations, assignments, study materials, and past papers shared by students across programmes.</p>
             <form class="home-course-form" th:action="@{/resources}" method="get" id="home-course-form">

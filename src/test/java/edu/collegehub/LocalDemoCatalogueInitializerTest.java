@@ -62,14 +62,17 @@ class LocalDemoCatalogueInitializerTest {
         assertTrue(resources.findAll().stream().noneMatch(Resource::isDemoResource));
 
         Resource example = resources.findAll().stream()
-                .filter(resource -> resource.getTitle().equals("Demo: Java Programming Quick Notes"))
+                .filter(resource -> resource.getTitle().equals("Sample: Java Programming Quick Notes"))
                 .findFirst().orElseThrow();
         assertNotNull(example.getProgramme());
         assertNotNull(example.getSemester());
         assertNotNull(example.getSubject());
         var file = storage.pathFor(example.getStoredFilename());
         assertTrue(Files.exists(file));
-        assertTrue(Files.readAllBytes(file).length > 100);
+        byte[] samplePdf = Files.readAllBytes(file);
+        assertTrue(samplePdf.length > 100);
+        assertTrue(new String(samplePdf, java.nio.charset.StandardCharsets.US_ASCII)
+                .contains("Fictional sample material. Not an official college document."));
 
         mvc.perform(get("/resources").param("q", "Java Programming Quick Notes").param("allCourses", "true"))
                 .andExpect(status().isOk()).andExpect(content().string(org.hamcrest.Matchers.containsString("Java Programming Quick Notes")));
@@ -95,17 +98,33 @@ class LocalDemoCatalogueInitializerTest {
         existingUpload = resources.saveAndFlush(existingUpload);
         Long existingUploadId = existingUpload.getId();
 
+        example.setDetails("Demo: Java Programming Quick Notes", example.getDescription(), example.getProgramme(),
+                example.getSemester(), example.getSubject(), example.getResourceType(), example.getFileFormat(),
+                example.getDisplayFilename(), example.getStoredFilename(), example.getFileSizeBytes(), null, null, null);
+        example.approve(null);
+        var previousReviewTime = example.getReviewedAt();
+        resources.saveAndFlush(example);
+
         long beforeRestart = resources.count();
         initializer.run(new DefaultApplicationArguments());
         assertEquals(beforeRestart, resources.count());
         assertEquals(17, programmes.count());
+        Resource renamedSample = resources.findById(example.getId()).orElseThrow();
+        assertEquals("Sample: Java Programming Quick Notes", renamedSample.getTitle());
+        assertEquals(ModerationStatus.APPROVED, renamedSample.getStatus());
+        assertEquals(previousReviewTime, renamedSample.getReviewedAt());
+        assertTrue(new String(Files.readAllBytes(storage.pathFor(renamedSample.getStoredFilename())),
+                java.nio.charset.StandardCharsets.US_ASCII)
+                .contains("Fictional sample material. Not an official college document."));
+        initializer.run(new DefaultApplicationArguments());
+        assertEquals(beforeRestart, resources.count());
         Resource preservedUpload = resources.findById(existingUploadId).orElseThrow();
         assertEquals(ModerationStatus.PENDING, preservedUpload.getStatus());
         assertEquals("Existing student upload", preservedUpload.getTitle());
         assertEquals(existingFile.storedFilename(), preservedUpload.getStoredFilename());
         assertEquals(student.getId(), preservedUpload.getUploadedBy().getId());
         assertTrue(Files.exists(existingFile.path()));
-        assertFalse(resources.findAll().stream().anyMatch(resource -> resource.getTitle().equals("Demo: Java Programming Quick Notes")
+        assertFalse(resources.findAll().stream().anyMatch(resource -> resource.getTitle().equals("Sample: Java Programming Quick Notes")
                 && resource.getStatus() != ModerationStatus.APPROVED));
 
         String home = mvc.perform(get("/")).andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
@@ -129,15 +148,17 @@ class LocalDemoCatalogueInitializerTest {
 
         String listing = mvc.perform(get("/resources").param("q", "Java Programming Quick Notes").param("allCourses", "true"))
                 .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
-        assertTrue(listing.contains(">Java Programming Quick Notes</a>"));
+        assertTrue(listing.contains(">Sample: Java Programming Quick Notes</a>"));
         assertFalse(listing.contains("Demo:"));
         assertFalse(listing.contains("Illustrative demo material"));
+        assertTrue(listing.contains("Fictional sample material. Not an official college document."));
         assertTrue(listing.contains("Practice papers are fictional examples, not authentic university papers."));
 
         String detail = mvc.perform(get("/resources/{id}", example.getId()))
                 .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
-        assertTrue(detail.contains(">Java Programming Quick Notes</h1>"));
+        assertTrue(detail.contains(">Sample: Java Programming Quick Notes</h1>"));
         assertFalse(detail.contains("Demo:"));
         assertFalse(detail.contains("Illustrative demo material"));
+        assertTrue(detail.contains("Fictional sample material. Not an official college document."));
     }
 }

@@ -6,12 +6,13 @@ The programme and subject names are illustrative demo categories. They are not v
 
 ## What is included
 
-- Five programmes with database-backed semesters and subjects.
+- Database-backed programmes, semesters, and subjects. The MySQL migrations seed five illustrative programmes.
+- The local H2 profile adds 12 more illustrative programmes and 32 sample resources. The local samples are pre-approved only to demonstrate browsing and downloading; each uses a generic placeholder PDF, not real course materials or an official paper.
 - Search, course/semester/subject/type filters, exam-paper filters, sorting, and pagination.
 - Student registration/login, saved course preferences, resource upload, and “My uploads”.
 - Admin approval or rejection before student uploads are publicly visible.
-- Private file storage under `uploads/`; MySQL stores resource details and event history.
-- No resource uploads are pre-populated; the browse pages show approved student uploads only.
+- Uploaded files are stored separately under `uploads/`; the active database stores resource details and event history.
+- The default MySQL profile does not preload browseable resource files. Local sample resources are separate from student uploads; student uploads remain pending until an admin reviews and approves them.
 - Admin-only CSV export of non-identifying upload/download usage fields for R analysis.
 
 ## Requirements
@@ -23,9 +24,9 @@ The programme and subject names are illustrative demo categories. They are not v
 
 Maven is included as a wrapper, so installing Maven separately is not required. On Windows use `mvnw.cmd`.
 
-## Local development setup on Windows (no MySQL setup)
+## Local H2 development setup on Windows (no MySQL setup)
 
-The `local` profile uses an H2 file database under `data/`. It does not need MySQL and keeps accounts, resources, and moderation decisions between restarts. Production keeps using the MySQL settings in `application.properties`.
+The `local` profile uses a persistent H2 file database under `data/`, so it does not need MySQL and keeps accounts, resources, and moderation decisions between restarts. Flyway seeds the five-programme catalogue, and the local-only initializer adds 12 illustrative programmes and 32 sample resources. Those sample resources are approved for browsing and downloading so you can demonstrate the interface. They all use the same generic placeholder PDF and are not real course materials or official papers; they are not student uploads. Student uploads still enter the normal Pending review flow and appear publicly only after an admin approves them. The default profile continues to use the MySQL settings in `application.properties`.
 
 1. Open this folder in VS Code.
 2. Choose **Terminal → New Terminal**.
@@ -59,9 +60,9 @@ For a workflow demonstration, register a fictional student, sign in, upload a fi
 
 Admins can also remove a pending item directly from the review queue, or open an approved resource from **Browse resources** and use the admin removal panel on its detail page. Enter a reason and confirm. The file is deleted after the removal is committed, public search and downloads stop working, and the uploader sees the removal status and reason in **My uploads**. The resource row remains in the database with the admin, time, and reason recorded.
 
-## MySQL profile
+## MySQL setup (default profile)
 
-The default profile connects to MySQL. Create a database (or allow the configured MySQL account to create it) and provide credentials with environment variables so passwords stay out of source control:
+The default profile connects to MySQL. Its migrations seed five illustrative programmes, semesters, and subjects, but do not add browseable resource files. The 12 additional local programmes and 32 preloaded sample resources are created only by the `local` H2 profile. Student uploads in MySQL also stay pending until an admin approves them. Create a database (or allow the configured MySQL account to create it) and provide credentials with environment variables so passwords stay out of source control:
 
 ```powershell
 $env:DB_URL = 'jdbc:mysql://localhost:3306/collegehub?createDatabaseIfNotExist=true&serverTimezone=UTC'
@@ -92,6 +93,18 @@ Flyway applies SQL files in `src/main/resources/db/migration/` when the applicat
 - `usage/` exports aggregate-safe CSV rows with event date, programme, semester, subject, and resource type. It does not include names or email addresses.
 - `analysis/` contains R examples for analyzing the CSV export.
 
+### Reproduce the analysis with synthetic data
+
+The file `analysis/sample-data/synthetic-usage.csv` contains 120 fictional upload and download events across five programmes and eleven subjects over 30 days. The values are deliberately uneven to make the examples useful for practice. Its summaries and charts are illustrative only: they are not actual student activity and are not evidence of improved learning. The file contains no student names, emails, or other personal information.
+
+From the project root, run:
+
+```powershell
+Rscript analysis/analyze_usage.R analysis/sample-data/synthetic-usage.csv analysis/example-output
+```
+
+The script writes `usage_by_programme.csv`, `usage_by_subject.csv`, and `usage_by_day.csv`, plus `downloads_by_subject.png`, `daily_activity.png`, and `activity_by_programme.png` to `analysis/example-output/`. All outputs from this synthetic input are illustrative. The script uses base R only.
+
 To analyze real activity, sign in as an admin, choose **Download usage CSV** on the review queue, then run:
 
 ```powershell
@@ -100,8 +113,18 @@ Rscript analysis/analyze_usage.R path\to\collegehub-usage.csv
 
 The script writes summaries by programme, subject, and day beside the input CSV, and a subject download chart when download events exist. It uses base R only.
 
+## Academic SQL examples
+
+`sql/project_queries.sql` contains four read-only examples based on the project schema: joins that list resources with programme, semester, and subject names; filtering by a sample keyword; grouping and aggregation of approved resources by programme and type; and aggregation of recorded downloads by programme, subject, and date. Download totals count recorded events, not unique students. These examples are for learning and do not contain precomputed or claimed results.
+
 The upload form checks file extensions and file contents, and the server checks programme/semester/subject relationships. Only approved resources can be read by public detail and download routes. CSRF protection and password hashing are enabled by Spring Security.
 
 ## Git collaboration
 
 Use a branch for each feature, commit code and migrations together, and open a pull request for teammate review. Do not commit `.env` files, database credentials, `data/`, or `uploads/`. For GitHub Pages, the `docs/` folder is only a static preview; authentication, database, file uploads, moderation, and usage tracking run in Spring Boot and are not provided by Pages.
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the contributor workflow and submission checklist.
+
+## License
+
+This project is licensed under the MIT License. See [LICENSE](LICENSE).

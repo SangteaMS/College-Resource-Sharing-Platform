@@ -127,6 +127,15 @@ public class Resource {
         this.reviewedBy = null;
         this.reviewedAt = null;
     }
+    public void updateSampleContent(String title, String description, FileFormat fileFormat, String displayFilename,
+                                    String storedFilename, long fileSizeBytes) {
+        this.title = title.trim();
+        this.description = description == null || description.isBlank() ? null : description.trim();
+        this.fileFormat = fileFormat;
+        this.displayFilename = displayFilename;
+        if (storedFilename != null) this.storedFilename = storedFilename;
+        if (fileSizeBytes >= 0) this.fileSizeBytes = fileSizeBytes;
+    }
     public void setUploader(AppUser user) { this.uploadedBy = user; }
     public void setDemoResource(boolean demoResource) { this.demoResource = demoResource; }
     public void approve(AppUser admin) {

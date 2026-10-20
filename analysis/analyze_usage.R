@@ -38,12 +38,51 @@ write.csv(by_day, file.path(output_folder, "usage_by_day.csv"), row.names = FALS
 
 downloads <- subset(usage, event_type == "DOWNLOAD")
 if (nrow(downloads) > 0) {
-  subject_downloads <- sort(table(downloads$subject_name), decreasing = TRUE)
-  png(file.path(output_folder, "downloads_by_subject.png"), width = 1100, height = 700)
-  par(mar = c(10, 5, 3, 1))
-  barplot(subject_downloads, las = 2, col = "darkseagreen3",
-          main = "Recorded downloads by subject", ylab = "Download events")
+  subject_downloads <- sort(table(downloads$subject_name), decreasing = FALSE)
+  png(file.path(output_folder, "downloads_by_subject.png"), width = 1500, height = 900)
+  par(mar = c(5, 14, 4, 2))
+  barplot(subject_downloads, horiz = TRUE, las = 1, cex.names = 0.85,
+          col = "darkseagreen3", main = "Synthetic example: downloads by subject",
+          xlab = "Download events")
   dev.off()
 }
+
+daily_activity <- xtabs(~ event_day + event_type, data = usage)
+activity_types <- c("UPLOAD", "DOWNLOAD")
+for (event_type in activity_types) {
+  if (!event_type %in% colnames(daily_activity)) {
+    daily_activity <- cbind(daily_activity, setNames(rep(0, nrow(daily_activity)), event_type))
+  }
+}
+daily_activity <- daily_activity[, activity_types, drop = FALSE]
+activity_dates <- as.Date(rownames(daily_activity))
+png(file.path(output_folder, "daily_activity.png"), width = 1500, height = 800)
+par(mar = c(7, 5, 4, 2))
+plot(activity_dates, daily_activity[, "UPLOAD"], type = "n", xaxt = "n",
+     ylim = range(daily_activity), xlab = "Date", ylab = "Recorded events",
+     main = "Synthetic example: daily uploads and downloads")
+axis.Date(1, at = seq(min(activity_dates), max(activity_dates), by = "5 days"),
+          format = "%b %d", las = 2, cex.axis = 0.9)
+grid()
+lines(activity_dates, daily_activity[, "UPLOAD"], type = "o", pch = 16, col = "steelblue4")
+lines(activity_dates, daily_activity[, "DOWNLOAD"], type = "o", pch = 16, col = "darkgreen")
+legend("topright", legend = activity_types, col = c("steelblue4", "darkgreen"),
+       lty = 1, pch = 16, bty = "n")
+dev.off()
+
+programme_activity <- xtabs(~ programme_code + event_type, data = usage)
+for (event_type in activity_types) {
+  if (!event_type %in% colnames(programme_activity)) {
+    programme_activity <- cbind(programme_activity, setNames(rep(0, nrow(programme_activity)), event_type))
+  }
+}
+programme_activity <- programme_activity[, activity_types, drop = FALSE]
+png(file.path(output_folder, "activity_by_programme.png"), width = 1300, height = 800)
+par(mar = c(6, 5, 4, 2))
+barplot(t(programme_activity), beside = TRUE, names.arg = rownames(programme_activity),
+        col = c("steelblue4", "darkgreen"), ylab = "Recorded events",
+        xlab = "Programme code", main = "Synthetic example: activity by programme",
+        legend.text = activity_types, args.legend = list(x = "topright", bty = "n"))
+dev.off()
 
 message("Analysis files saved to: ", normalizePath(output_folder, winslash = "/", mustWork = TRUE))
